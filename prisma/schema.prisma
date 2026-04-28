@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  phone     String    @unique
+  name      String?
+  addresses Json?
+  orders    Order[]
+  cartItems CartItem[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id               String   @id @default(cuid())
+  name             String
+  basePrice        Int
+  retailPrice      Int
+  category         String
+  images           Json
+  availableOptions Json
+  cartItems        CartItem[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model CartItem {
+  id              String   @id @default(cuid())
+  userId          String
+  productId       String
+  selectedOptions Json
+  quantity        Int      @default(1)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Order {
+  id         String   @id @default(cuid())
+  userId     String
+  items      Json
+  totalPrice Int
+  address    Json
+  status     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+}
