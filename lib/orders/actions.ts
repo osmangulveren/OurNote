@@ -6,6 +6,7 @@ import { OrderStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireCustomer, requireSession } from "@/lib/auth/session";
 import { D, round2 } from "@/lib/money";
+import { effectiveUnitPrice, loadCustomerPricingContext } from "@/lib/pricing";
 
 function generateOrderNumber() {
   const now = new Date();
@@ -31,6 +32,8 @@ export async function placeOrder() {
     return { error: "Sepetiniz boş." };
   }
 
+  const pricingCtx = await loadCustomerPricingContext(prisma, userId);
+
   const order = await prisma.$transaction(async (tx) => {
     let subtotal = new D(0);
     let vatTotal = new D(0);
@@ -47,7 +50,7 @@ export async function placeOrder() {
         throw new Error(`${fresh.name} için stok yetersiz (kullanılabilir: ${available}).`);
       }
 
-      const unitPrice = new D(fresh.price);
+      const unitPrice = effectiveUnitPrice(fresh.price as any, fresh.id, pricingCtx);
       const vatRate = new D(fresh.vatRate);
       const lineSubtotal = round2(unitPrice.mul(item.quantity));
       const lineVat = round2(lineSubtotal.mul(vatRate).div(100));

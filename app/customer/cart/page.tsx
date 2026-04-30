@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireCustomer } from "@/lib/auth/session";
 import { D, formatTRY, round2 } from "@/lib/money";
+import { effectiveUnitPrice, loadCustomerPricingContext } from "@/lib/pricing";
 import CartTable from "./CartTable";
 import PlaceOrderButton from "./PlaceOrderButton";
 
@@ -8,21 +9,37 @@ export default async function CartPage() {
   const session = await requireCustomer();
   const userId = session.user!.id;
 
-  const cart = await prisma.cart.upsert({
-    where: { userId },
-    update: {},
-    create: { userId },
-    include: { items: { include: { product: true }, orderBy: { createdAt: "asc" } } },
-  });
+  const [cart, ctx] = await Promise.all([
+    prisma.cart.upsert({
+      where: { userId },
+      update: {},
+      create: { userId },
+      include: { items: { include: { product: true }, orderBy: { createdAt: "asc" } } },
+    }),
+    loadCustomerPricingContext(prisma, userId),
+  ]);
 
   let subtotal = new D(0);
   let vat = new D(0);
-  for (const item of cart.items) {
-    const lineSub = round2(new D(item.product.price).mul(item.quantity));
-    const lineVat = round2(lineSub.mul(item.product.vatRate).div(100));
+  const enrichedItems = cart.items.map((i) => {
+    const unit = effectiveUnitPrice(i.product.price as any, i.productId, ctx);
+    const lineSub = round2(unit.mul(i.quantity));
+    const lineVat = round2(lineSub.mul(i.product.vatRate).div(100));
     subtotal = subtotal.add(lineSub);
     vat = vat.add(lineVat);
-  }
+    return {
+      id: i.id,
+      productId: i.productId,
+      name: i.product.name,
+      sku: i.product.sku,
+      unit: i.product.unit,
+      quantity: i.quantity,
+      available: i.product.stockQuantity - i.product.reservedQuantity + i.quantity,
+      unitPrice: unit.toFixed(2),
+      listPrice: i.product.price.toString(),
+      vatRate: i.product.vatRate.toString(),
+    };
+  });
   const grand = round2(subtotal.add(vat));
 
   return (
@@ -32,19 +49,7 @@ export default async function CartPage() {
         <p className="text-slate-500">Sepetiniz boş.</p>
       ) : (
         <>
-          <CartTable
-            items={cart.items.map((i) => ({
-              id: i.id,
-              productId: i.productId,
-              name: i.product.name,
-              sku: i.product.sku,
-              unit: i.product.unit,
-              quantity: i.quantity,
-              available: i.product.stockQuantity - i.product.reservedQuantity + i.quantity,
-              unitPrice: i.product.price.toString(),
-              vatRate: i.product.vatRate.toString(),
-            }))}
-          />
+          <CartTable items={enrichedItems} />
           <div className="bg-white border border-slate-200 rounded-2xl p-5 max-w-sm ml-auto space-y-2 text-sm">
             <Row label="Ara Toplam" value={formatTRY(subtotal)} />
             <Row label="KDV" value={formatTRY(vat)} />

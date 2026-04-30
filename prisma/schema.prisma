@@ -34,6 +34,30 @@ enum StockMovementType {
   MANUAL_ADJUSTMENT
 }
 
+enum ProductCategory {
+  KOLTUK
+  KANEPE
+  SOMINE
+}
+
+enum FabricType {
+  BOUCLE
+  KADIFE
+  CHENILLE
+  SUNI_DERI
+  KETEN
+  YOK
+  DIGER
+}
+
+enum FrameType {
+  KAYIN_MASIF
+  MDF
+  METAL
+  KARMA
+  YOK
+}
+
 model User {
   id              String           @id @default(cuid())
   email           String           @unique
@@ -47,18 +71,20 @@ model User {
   cart            Cart?
   orders          Order[]
   invoices        InvoiceDraft[]
+  customPrices    CustomerProductPrice[]
 }
 
 model CustomerProfile {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  companyName String
-  taxNumber   String?
-  phone       String?
-  address     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName        String
+  taxNumber          String?
+  phone              String?
+  address            String?
+  discountPercentage Decimal  @db.Decimal(5, 2) @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
 model Product {
@@ -72,12 +98,76 @@ model Product {
   stockQuantity    Int             @default(0)
   reservedQuantity Int             @default(0)
   isActive         Boolean         @default(true)
+
+  // Kategorizasyon
+  category         ProductCategory @default(KANEPE)
+  collection       String?
+  designer         String?
+  modelInfo        String?
+
+  // Boyutlar (cm)
+  widthCm          Int?
+  depthCm          Int?
+  heightCm         Int?
+
+  // Oturma alanı (cm) — koltuk/kanepe için
+  seatWidthCm      Int?
+  seatDepthCm      Int?
+  seatHeightCm     Int?
+
+  // Kapasite
+  seatCount        Int?
+  weightKg         Decimal?        @db.Decimal(8, 2)
+
+  // Yapı
+  fabricType       FabricType?
+  fabricColor      String?
+  fabricColorHex   String?
+  frameType        FrameType?
+  foamDensityKgM3  Int?
+  durabilityMartindale Int?
+
+  // Servis
+  warrantyMonths   Int?
+  leadTimeDays     Int?
+  careInstructions String?
+
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
+  images           ProductImage[]
+  customerPrices   CustomerProductPrice[]
   cartItems        CartItem[]
   orderItems       OrderItem[]
   stockMovements   StockMovement[]
+
+  @@index([category])
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  sortOrder Int      @default(0)
+  isCover   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([productId, sortOrder])
+}
+
+model CustomerProductPrice {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  price      Decimal  @db.Decimal(12, 2)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([customerId, productId])
 }
 
 model Cart {

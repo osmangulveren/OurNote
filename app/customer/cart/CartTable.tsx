@@ -13,6 +13,7 @@ interface Item {
   quantity: number;
   available: number;
   unitPrice: string;
+  listPrice?: string;
   vatRate: string;
 }
 
@@ -52,7 +53,16 @@ function Row({ item }: { item: Item }) {
         <div className="font-medium">{item.name}</div>
         <div className="text-xs text-slate-500 font-mono">{item.sku}</div>
       </td>
-      <td className="px-4 py-2 text-right">{formatTRY(item.unitPrice)}</td>
+      <td className="px-4 py-2 text-right">
+        {item.listPrice && Number(item.listPrice) > Number(item.unitPrice) ? (
+          <div>
+            <div className="text-xs text-slate-400 line-through">{formatTRY(item.listPrice)}</div>
+            <div className="text-emerald-700 font-medium">{formatTRY(item.unitPrice)}</div>
+          </div>
+        ) : (
+          formatTRY(item.unitPrice)
+        )}
+      </td>
       <td className="px-4 py-2 text-right">
         <div className="inline-flex items-center gap-1">
           <input
