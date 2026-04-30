@@ -1,17 +1,15 @@
-import type { Metadata } from 'next';
-import './globals.css';
+import type { Metadata } from "next";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: 'FabrikaFiyat',
-  description: 'Üretici fiyatına mobilya'
+  title: "B2B Tedarik MVP",
+  description: "B2B müşteriler için ürün, sipariş ve ön muhasebe yönetimi",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }): JSX.Element {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="tr">
-      <body>
-        <main className="mx-auto min-h-screen max-w-md bg-zinc-50 pb-24">{children}</main>
-      </body>
+      <body className="min-h-screen antialiased text-slate-900 bg-slate-50">{children}</body>
     </html>
   );
 }

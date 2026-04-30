@@ -3,13 +3,16 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  --background: 248 250 252;
+  --foreground: 17 24 39;
 }
 
-body {
-  @apply bg-zinc-50 text-zinc-900;
+html, body {
+  background-color: rgb(var(--background));
+  color: rgb(var(--foreground));
 }
 
-input, button {
-  @apply outline-none;
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
 }

@@ -1,55 +1,185 @@
+// B2B Supply / Stock / Order MVP
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+enum OrderStatus {
+  PENDING
+  APPROVED
+  PREPARING
+  SHIPPED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  READY_FOR_ACCOUNTING
+}
+
+enum StockMovementType {
+  RESERVE
+  RELEASE_RESERVATION
+  SHIP
+  MANUAL_ADJUSTMENT
+}
+
 model User {
-  id        String    @id @default(cuid())
-  phone     String    @unique
-  name      String?
-  addresses Json?
-  orders    Order[]
-  cartItems CartItem[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id              String           @id @default(cuid())
+  email           String           @unique
+  passwordHash    String
+  name            String?
+  role            Role             @default(CUSTOMER)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  customerProfile CustomerProfile?
+  cart            Cart?
+  orders          Order[]
+  invoices        InvoiceDraft[]
+}
+
+model CustomerProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName String
+  taxNumber   String?
+  phone       String?
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Product {
-  id               String   @id @default(cuid())
+  id               String          @id @default(cuid())
+  sku              String          @unique
   name             String
-  basePrice        Int
-  retailPrice      Int
-  category         String
-  images           Json
-  availableOptions Json
+  description      String?
+  unit             String          @default("adet")
+  price            Decimal         @db.Decimal(12, 2)
+  vatRate          Decimal         @db.Decimal(5, 2) @default(20.00)
+  stockQuantity    Int             @default(0)
+  reservedQuantity Int             @default(0)
+  isActive         Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
   cartItems        CartItem[]
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  orderItems       OrderItem[]
+  stockMovements   StockMovement[]
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model CartItem {
-  id              String   @id @default(cuid())
-  userId          String
-  productId       String
-  selectedOptions Json
-  quantity        Int      @default(1)
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId])
 }
 
 model Order {
-  id         String   @id @default(cuid())
-  userId     String
-  items      Json
-  totalPrice Int
-  address    Json
-  status     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now())
+  id          String        @id @default(cuid())
+  orderNumber String        @unique
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  status      OrderStatus   @default(PENDING)
+  subtotal    Decimal       @db.Decimal(12, 2)
+  vatTotal    Decimal       @db.Decimal(12, 2)
+  grandTotal  Decimal       @db.Decimal(12, 2)
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  items          OrderItem[]
+  invoice        InvoiceDraft?
+  stockMovements StockMovement[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id           String  @id @default(cuid())
+  orderId      String
+  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product @relation(fields: [productId], references: [id])
+  productName  String
+  sku          String
+  unit         String
+  unitPrice    Decimal @db.Decimal(12, 2)
+  vatRate      Decimal @db.Decimal(5, 2)
+  quantity     Int
+  lineSubtotal Decimal @db.Decimal(12, 2)
+  lineVat      Decimal @db.Decimal(12, 2)
+  lineTotal    Decimal @db.Decimal(12, 2)
+}
+
+model InvoiceDraft {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  orderId       String        @unique
+  order         Order         @relation(fields: [orderId], references: [id])
+  customerId    String
+  customer      User          @relation(fields: [customerId], references: [id])
+  issueDate     DateTime      @default(now())
+  subtotal      Decimal       @db.Decimal(12, 2)
+  vatTotal      Decimal       @db.Decimal(12, 2)
+  grandTotal    Decimal       @db.Decimal(12, 2)
+  status        InvoiceStatus @default(DRAFT)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model StockMovement {
+  id        String            @id @default(cuid())
+  productId String
+  product   Product           @relation(fields: [productId], references: [id])
+  type      StockMovementType
+  quantity  Int
+  orderId   String?
+  order     Order?            @relation(fields: [orderId], references: [id])
+  note      String?
+  createdAt DateTime          @default(now())
+
+  @@index([productId])
+  @@index([type])
+}
+
+model AccountingReportLog {
+  id          String   @id @default(cuid())
+  periodStart DateTime
+  periodEnd   DateTime
+  totalOrders Int
+  totalSales  Decimal  @db.Decimal(14, 2)
+  totalVat    Decimal  @db.Decimal(14, 2)
+  recipient   String
+  status      String   @default("SIMULATED")
+  payload     Json
+  createdAt   DateTime @default(now())
 }

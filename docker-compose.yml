@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: b2b-supply-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: b2b
+      POSTGRES_PASSWORD: b2b
+      POSTGRES_DB: b2b_supply
+    ports:
+      - "5432:5432"
+    volumes:
+      - b2b_pgdata:/var/lib/postgresql/data
+
+volumes:
+  b2b_pgdata:
