@@ -5,7 +5,7 @@ import { reportToCsv } from "@/lib/accounting/csv";
 
 export async function GET(req: Request) {
   const session = await auth();
-  if (!session || (session.user as any).role !== "ADMIN") {
+  if (!session || (session.user as any).role === "CUSTOMER" || !(session.user as any).role) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
   const { searchParams } = new URL(req.url);

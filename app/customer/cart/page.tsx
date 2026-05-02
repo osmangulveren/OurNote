@@ -1,66 +1,70 @@
 import { prisma } from "@/lib/prisma";
 import { requireCustomer } from "@/lib/auth/session";
 import { D, formatTRY, round2 } from "@/lib/money";
+import { effectiveUnitPrice, loadCustomerPricingContext } from "@/lib/pricing";
 import CartTable from "./CartTable";
-import PlaceOrderButton from "./PlaceOrderButton";
+import CheckoutPanel from "./CheckoutPanel";
 
 export default async function CartPage() {
   const session = await requireCustomer();
   const userId = session.user!.id;
 
-  const cart = await prisma.cart.upsert({
-    where: { userId },
-    update: {},
-    create: { userId },
-    include: { items: { include: { product: true }, orderBy: { createdAt: "asc" } } },
-  });
+  const [cart, ctx] = await Promise.all([
+    prisma.cart.upsert({
+      where: { userId },
+      update: {},
+      create: { userId },
+      include: { items: { include: { product: true }, orderBy: { createdAt: "asc" } } },
+    }),
+    loadCustomerPricingContext(prisma, userId),
+  ]);
 
   let subtotal = new D(0);
   let vat = new D(0);
-  for (const item of cart.items) {
-    const lineSub = round2(new D(item.product.price).mul(item.quantity));
-    const lineVat = round2(lineSub.mul(item.product.vatRate).div(100));
+  const enrichedItems = cart.items.map((i) => {
+    const config = (i.configuration as any) ?? null;
+    const compMul = Number(config?.composition?.priceMultiplier ?? 1);
+    const addonsDelta = Array.isArray(config?.addons)
+      ? config.addons.reduce((s: number, a: any) => s + Number(a?.priceDelta ?? 0), 0)
+      : 0;
+    const baseUnit = effectiveUnitPrice(i.product.price as any, i.productId, ctx);
+    const unit = round2(baseUnit.mul(compMul).add(new D(addonsDelta)));
+    const lineSub = round2(unit.mul(i.quantity));
+    const lineVat = round2(lineSub.mul(i.product.vatRate).div(100));
     subtotal = subtotal.add(lineSub);
     vat = vat.add(lineVat);
-  }
+    return {
+      id: i.id,
+      productId: i.productId,
+      name: i.product.name,
+      sku: i.product.sku,
+      unit: i.product.unit,
+      quantity: i.quantity,
+      available: i.product.stockQuantity - i.product.reservedQuantity + i.quantity,
+      unitPrice: unit.toFixed(2),
+      basePrice: baseUnit.toFixed(2),
+      vatRate: i.product.vatRate.toString(),
+      configurationSummary: config?.summary ?? null,
+      configurationColor: config?.fabricColor ?? null,
+    };
+  });
   const grand = round2(subtotal.add(vat));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Sepetim</h1>
       {cart.items.length === 0 ? (
         <p className="text-slate-500">Sepetiniz boş.</p>
       ) : (
-        <>
-          <CartTable
-            items={cart.items.map((i) => ({
-              id: i.id,
-              productId: i.productId,
-              name: i.product.name,
-              sku: i.product.sku,
-              unit: i.product.unit,
-              quantity: i.quantity,
-              available: i.product.stockQuantity - i.product.reservedQuantity + i.quantity,
-              unitPrice: i.product.price.toString(),
-              vatRate: i.product.vatRate.toString(),
-            }))}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div className="lg:col-span-2"><CartTable items={enrichedItems} /></div>
+          <CheckoutPanel
+            subtotal={formatTRY(subtotal)}
+            vat={formatTRY(vat)}
+            grand={formatTRY(grand)}
           />
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 max-w-sm ml-auto space-y-2 text-sm">
-            <Row label="Ara Toplam" value={formatTRY(subtotal)} />
-            <Row label="KDV" value={formatTRY(vat)} />
-            <Row label="Genel Toplam" value={formatTRY(grand)} bold />
-            <PlaceOrderButton />
-          </div>
-        </>
+        </div>
       )}
-    </div>
-  );
-}
-
-function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
-  return (
-    <div className={`flex justify-between ${bold ? "font-semibold" : "text-slate-600"}`}>
-      <span>{label}</span><span>{value}</span>
     </div>
   );
 }

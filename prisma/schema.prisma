@@ -10,8 +10,22 @@ datasource db {
 }
 
 enum Role {
-  ADMIN
+  ADMIN          // Eski kayıtlar — geriye dönük uyumluluk için. SUPER_ADMIN ile aynı yetki.
+  SUPER_ADMIN
+  OPERATIONS     // Sipariş + üretim + sevkiyat
+  ACCOUNTING     // Fatura + muhasebe
+  WAREHOUSE      // Stok + depo
+  SALES          // Müşteri + ürün
   CUSTOMER
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  BANK_CARD
+  CASH
+  CHECK
+  CASH_ON_DELIVERY
+  WIRE_TRANSFER
 }
 
 enum OrderStatus {
@@ -34,6 +48,68 @@ enum StockMovementType {
   MANUAL_ADJUSTMENT
 }
 
+enum ProductCategory {
+  KOLTUK
+  KANEPE
+  SOMINE
+}
+
+enum FabricType {
+  BOUCLE
+  KADIFE
+  CHENILLE
+  SUNI_DERI
+  KETEN
+  YOK
+  DIGER
+}
+
+enum FrameType {
+  KAYIN_MASIF
+  MDF
+  METAL
+  KARMA
+  YOK
+}
+
+enum ProductionStage {
+  WAITING            // henüz başlamadı (PENDING/APPROVED siparişler)
+  FRAME_BUILDING     // İskelet yapılıyor
+  UPHOLSTERY         // Döşeme yapılıyor
+  QUALITY_CHECK      // Kalite kontrol
+  PACKAGING          // Paketlendi
+  READY_FOR_LOADING  // Yüklemeye hazır
+  LOADED_ON_TRUCK    // TIR'a yüklendi
+  DEPARTED           // Yola çıktı
+  DELIVERED          // Teslim edildi
+}
+
+enum ShipmentStatus {
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+enum NotificationType {
+  ORDER_STATUS
+  PRODUCTION_STAGE
+  SHIPMENT_UPDATE
+  GENERIC
+}
+
+enum ChatMessageRole {
+  USER
+  ASSISTANT
+  TOOL
+  SYSTEM
+}
+
+enum DeliveryNoteStatus {
+  DRAFT
+  ISSUED
+}
+
 model User {
   id              String           @id @default(cuid())
   email           String           @unique
@@ -47,18 +123,23 @@ model User {
   cart            Cart?
   orders          Order[]
   invoices        InvoiceDraft[]
+  customPrices    CustomerProductPrice[]
+  notifications   Notification[]
+  conversations   Conversation[]
+  auditLogs       AuditLog[]
 }
 
 model CustomerProfile {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  companyName String
-  taxNumber   String?
-  phone       String?
-  address     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName        String
+  taxNumber          String?
+  phone              String?
+  address            String?
+  discountPercentage Decimal  @db.Decimal(5, 2) @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
 model Product {
@@ -72,12 +153,112 @@ model Product {
   stockQuantity    Int             @default(0)
   reservedQuantity Int             @default(0)
   isActive         Boolean         @default(true)
+
+  // Kategorizasyon
+  category         ProductCategory @default(KANEPE)
+  collection       String?
+  designer         String?
+  modelInfo        String?
+
+  // Boyutlar (cm)
+  widthCm          Int?
+  depthCm          Int?
+  heightCm         Int?
+
+  // Oturma alanı (cm) — koltuk/kanepe için
+  seatWidthCm      Int?
+  seatDepthCm      Int?
+  seatHeightCm     Int?
+
+  // Kapasite
+  seatCount        Int?
+  weightKg         Decimal?        @db.Decimal(8, 2)
+
+  // Yapı
+  fabricType       FabricType?
+  fabricColor      String?
+  fabricColorHex   String?
+  frameType        FrameType?
+  foamDensityKgM3  Int?
+  durabilityMartindale Int?
+
+  // Servis
+  warrantyMonths   Int?
+  leadTimeDays     Int?
+  careInstructions String?
+
+  // Konfigüratör seçenekleri (admin ürün başına tanımlar)
+  // availableFabricColors: [{ name: "Krem", hex: "#F5EDE0" }, ...]
+  // availableCompositions: [{ label: "Tekli", priceMultiplier: 0.4 }, { label: "3+2", priceMultiplier: 1.0 }, ...]
+  // availableAddons:       [{ label: "Şömine Modern", priceDelta: 16000 }, ...]
+  availableFabricColors  Json?
+  availableCompositions  Json?
+  availableAddons        Json?
+
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
+  images           ProductImage[]
+  customerPrices   CustomerProductPrice[]
   cartItems        CartItem[]
   orderItems       OrderItem[]
   stockMovements   StockMovement[]
+  warehouseStocks  WarehouseStock[]
+
+  @@index([category])
+}
+
+model Warehouse {
+  id        String           @id @default(cuid())
+  name      String
+  code      String           @unique
+  address   String?
+  isDefault Boolean          @default(false)
+  isActive  Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  stocks    WarehouseStock[]
+}
+
+model WarehouseStock {
+  id               String    @id @default(cuid())
+  warehouseId      String
+  warehouse        Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  productId        String
+  product          Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  stockQuantity    Int       @default(0)
+  reservedQuantity Int       @default(0)
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([warehouseId, productId])
+  @@index([productId])
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  sortOrder Int      @default(0)
+  isCover   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([productId, sortOrder])
+}
+
+model CustomerProductPrice {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  price      Decimal  @db.Decimal(12, 2)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([customerId, productId])
 }
 
 model Cart {
@@ -90,54 +271,112 @@ model Cart {
 }
 
 model CartItem {
-  id        String   @id @default(cuid())
-  cartId    String
-  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id])
-  quantity  Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([cartId, productId])
+  id            String   @id @default(cuid())
+  cartId        String
+  cart          Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id])
+  quantity      Int
+  /// Konfigüratör seçimleri:
+  /// { fabricColor?: { name, hex }, composition?: { label, priceMultiplier },
+  ///   addons?: [{ label, priceDelta }], priceDelta?: number, summary?: string }
+  configuration Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Order {
-  id          String        @id @default(cuid())
-  orderNumber String        @unique
-  userId      String
-  user        User          @relation(fields: [userId], references: [id])
-  status      OrderStatus   @default(PENDING)
-  subtotal    Decimal       @db.Decimal(12, 2)
-  vatTotal    Decimal       @db.Decimal(12, 2)
-  grandTotal  Decimal       @db.Decimal(12, 2)
-  notes       String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id              String        @id @default(cuid())
+  orderNumber     String        @unique
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  status          OrderStatus   @default(PENDING)
+  productionStage ProductionStage @default(WAITING)
+  paymentMethod   PaymentMethod @default(WIRE_TRANSFER)
+  subtotal        Decimal       @db.Decimal(12, 2)
+  vatTotal        Decimal       @db.Decimal(12, 2)
+  grandTotal      Decimal       @db.Decimal(12, 2)
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
-  items          OrderItem[]
-  invoice        InvoiceDraft?
-  stockMovements StockMovement[]
+  items            OrderItem[]
+  invoice          InvoiceDraft?
+  deliveryNote     DeliveryNoteDraft?
+  stockMovements   StockMovement[]
+  productionEvents ProductionEvent[]
+  shipment         Shipment?
 
   @@index([userId])
   @@index([status])
+  @@index([productionStage])
+}
+
+model ProductionEvent {
+  id        String          @id @default(cuid())
+  orderId   String
+  order     Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  stage     ProductionStage
+  note      String?
+  photoUrl  String?
+  createdAt DateTime        @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+model Shipment {
+  id            String          @id @default(cuid())
+  orderId       String          @unique
+  order         Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  truckPlate    String
+  driverName    String
+  driverPhone   String?
+  trackingToken String          @unique @default(cuid())
+  status        ShipmentStatus  @default(PENDING)
+  departureAt   DateTime?
+  etaAt         DateTime?
+  deliveredAt   DateTime?
+  lastLat       Float?
+  lastLng       Float?
+  lastPingAt    DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([trackingToken])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String?
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, readAt, createdAt])
 }
 
 model OrderItem {
-  id           String  @id @default(cuid())
-  orderId      String
-  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId    String
-  product      Product @relation(fields: [productId], references: [id])
-  productName  String
-  sku          String
-  unit         String
-  unitPrice    Decimal @db.Decimal(12, 2)
-  vatRate      Decimal @db.Decimal(5, 2)
-  quantity     Int
-  lineSubtotal Decimal @db.Decimal(12, 2)
-  lineVat      Decimal @db.Decimal(12, 2)
-  lineTotal    Decimal @db.Decimal(12, 2)
+  id            String  @id @default(cuid())
+  orderId       String
+  order         Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product @relation(fields: [productId], references: [id])
+  productName   String
+  sku           String
+  unit          String
+  unitPrice     Decimal @db.Decimal(12, 2)
+  vatRate       Decimal @db.Decimal(5, 2)
+  quantity      Int
+  lineSubtotal  Decimal @db.Decimal(12, 2)
+  lineVat       Decimal @db.Decimal(12, 2)
+  lineTotal     Decimal @db.Decimal(12, 2)
+  configuration Json?
+  /// [{ warehouseId, quantity }] — sipariş anında ayrılan depolar; SHIP ve CANCEL bunu kullanır.
+  warehouseAllocation Json?
 }
 
 model InvoiceDraft {
@@ -169,6 +408,64 @@ model StockMovement {
 
   @@index([productId])
   @@index([type])
+}
+
+model Conversation {
+  id        String                @id @default(cuid())
+  userId    String
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String?
+  messages  ConversationMessage[]
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+
+  @@index([userId, updatedAt])
+}
+
+model ConversationMessage {
+  id             String          @id @default(cuid())
+  conversationId String
+  conversation   Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           ChatMessageRole
+  content        String
+  toolName       String?
+  toolArgs       Json?
+  toolResult     Json?
+  createdAt      DateTime        @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  actorEmail String?
+  action     String
+  entityType String
+  entityId   String?
+  payload    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model DeliveryNoteDraft {
+  id              String             @id @default(cuid())
+  noteNumber      String             @unique
+  orderId         String             @unique
+  order           Order              @relation(fields: [orderId], references: [id])
+  shipmentId      String?
+  status          DeliveryNoteStatus @default(DRAFT)
+  issueDate       DateTime           @default(now())
+  carrierPlate    String?
+  carrierDriver   String?
+  totalLineCount  Int                @default(0)
+  totalQuantity   Int                @default(0)
+  notes           String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 }
 
 model AccountingReportLog {

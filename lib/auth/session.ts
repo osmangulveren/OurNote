@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import type { Role } from "@prisma/client";
+import { hasPermission, isAdminRole, type Permission } from "./permissions";
 
 export async function requireSession() {
   const session = await auth();
@@ -8,19 +9,29 @@ export async function requireSession() {
   return session;
 }
 
-export async function requireRole(role: Role) {
+export async function requireAdmin() {
   const session = await requireSession();
-  const userRole = (session.user as any).role as Role;
-  if (userRole !== role) {
-    redirect(userRole === "ADMIN" ? "/admin" : "/customer");
+  const role = (session.user as any).role as Role;
+  if (!isAdminRole(role)) {
+    redirect("/customer");
   }
   return session;
 }
 
-export async function requireAdmin() {
-  return requireRole("ADMIN");
+export async function requireCustomer() {
+  const session = await requireSession();
+  const role = (session.user as any).role as Role;
+  if (role !== "CUSTOMER") {
+    redirect("/admin");
+  }
+  return session;
 }
 
-export async function requireCustomer() {
-  return requireRole("CUSTOMER");
+export async function requirePermission(perm: Permission) {
+  const session = await requireSession();
+  const role = (session.user as any).role as Role;
+  if (!hasPermission(role, perm)) {
+    redirect(isAdminRole(role) ? "/admin" : "/customer");
+  }
+  return session;
 }

@@ -4,12 +4,15 @@ import { auth } from "@/auth";
 export default auth((req) => {
   const { pathname } = req.nextUrl;
   const session = req.auth;
-  const role = (session?.user as any)?.role as "ADMIN" | "CUSTOMER" | undefined;
+  const role = (session?.user as any)?.role as
+    | "ADMIN" | "SUPER_ADMIN" | "OPERATIONS" | "ACCOUNTING" | "WAREHOUSE" | "SALES" | "CUSTOMER"
+    | undefined;
 
   const isAdminPath = pathname.startsWith("/admin");
   const isCustomerPath = pathname.startsWith("/customer");
   const isInvoicePath = pathname.startsWith("/invoices");
-  const isProtected = isAdminPath || isCustomerPath || isInvoicePath;
+  const isDeliveryPath = pathname.startsWith("/delivery-notes");
+  const isProtected = isAdminPath || isCustomerPath || isInvoicePath || isDeliveryPath;
 
   if (!session && isProtected) {
     const url = new URL("/login", req.url);
@@ -18,10 +21,12 @@ export default auth((req) => {
   }
 
   if (session && pathname === "/login") {
-    return NextResponse.redirect(new URL(role === "ADMIN" ? "/admin" : "/customer", req.url));
+    return NextResponse.redirect(new URL(role && role !== "CUSTOMER" ? "/admin" : "/customer", req.url));
   }
 
-  if (isAdminPath && role !== "ADMIN") {
+  const isAdminish = role !== undefined && role !== "CUSTOMER";
+
+  if (isAdminPath && !isAdminish) {
     return NextResponse.redirect(new URL("/customer", req.url));
   }
   if (isCustomerPath && role !== "CUSTOMER") {
@@ -32,5 +37,6 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/admin/:path*", "/customer/:path*", "/invoices/:path*", "/login"],
+  // /driver/[token] ve /api/driver/ping bilinçli olarak korumasızdır.
+  matcher: ["/admin/:path*", "/customer/:path*", "/invoices/:path*", "/delivery-notes/:path*", "/login"],
 };

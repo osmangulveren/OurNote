@@ -18,7 +18,8 @@ export default async function InvoicePage({ params }: { params: { id: string } }
   if (!invoice) notFound();
 
   const role = (session.user as any).role;
-  if (role !== "ADMIN" && invoice.customerId !== session.user!.id) {
+  const isAdminish = role && role !== "CUSTOMER";
+  if (!isAdminish && invoice.customerId !== session.user!.id) {
     notFound();
   }
 
@@ -33,13 +34,13 @@ export default async function InvoicePage({ params }: { params: { id: string } }
       <div className="max-w-4xl mx-auto">
         <div className="no-print flex items-center justify-between mb-4">
           <Link
-            href={role === "ADMIN" ? `/admin/orders/${invoice.orderId}` : `/customer/orders/${invoice.orderId}`}
+            href={isAdminish ? `/admin/orders/${invoice.orderId}` : `/customer/orders/${invoice.orderId}`}
             className="text-sm text-slate-600 hover:underline"
           >
             ← Siparişe dön
           </Link>
           <div className="flex items-center gap-2">
-            {role === "ADMIN" && invoice.status === "DRAFT" ? (
+            {isAdminish && invoice.status === "DRAFT" ? (
               <MarkReadyButton invoiceId={invoice.id} />
             ) : null}
             <PrintButton />
