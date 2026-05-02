@@ -28,7 +28,7 @@ export async function loginAction(_: LoginState, formData: FormData): Promise<Lo
     target = next;
   } else {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (user?.role === "ADMIN") target = "/admin";
+    if (user && user.role !== "CUSTOMER") target = "/admin";
   }
   redirect(target);
 }

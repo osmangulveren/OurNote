@@ -394,14 +394,58 @@ async function main() {
   await prisma.productImage.deleteMany({});
   await prisma.customerProductPrice.deleteMany({});
   // Ürünleri tek tek upsert et — sipariş varsa korunur
+  // Depo seed
+  const mainWh = await prisma.warehouse.upsert({
+    where: { code: "ANK-1" },
+    update: {},
+    create: { name: "Ana Depo (Ankara)", code: "ANK-1", isDefault: true, address: "Ankara OSB" },
+  });
+  const istWh = await prisma.warehouse.upsert({
+    where: { code: "IST-1" },
+    update: {},
+    create: { name: "İstanbul Showroom Stok", code: "IST-1", address: "İstanbul Atışalanı" },
+  });
+
+  // Konfigüratör seçenekleri — kategori bazlı default'lar
+  const SOFA_FABRIC_COLORS = [
+    { name: "Krem", hex: "#F5EDE0" },
+    { name: "Antrasit", hex: "#3B3F45" },
+    { name: "Saks Mavi", hex: "#1F3A8A" },
+    { name: "Vizon", hex: "#A99280" },
+    { name: "Yeşil", hex: "#3F6B53" },
+  ];
+  const SOFA_COMPOSITIONS = [
+    { label: "Tekli", priceMultiplier: 0.4 },
+    { label: "İkili", priceMultiplier: 0.7 },
+    { label: "Üçlü", priceMultiplier: 1.0 },
+    { label: "Set 3+2", priceMultiplier: 1.6 },
+    { label: "Set 3+2+1", priceMultiplier: 2.0 },
+    { label: "L Köşe", priceMultiplier: 1.8 },
+  ];
+  const SOFA_ADDONS = [
+    { label: "Şömine Modern", priceDelta: 16000 },
+    { label: "Şömine Chester", priceDelta: 18500 },
+    { label: "Sehpa Takımı", priceDelta: 8500 },
+    { label: "Vitrin", priceDelta: 22000 },
+    { label: "TV Ünitesi", priceDelta: 14000 },
+  ];
+  const FIREPLACE_COLORS = [
+    { name: "Beyaz", hex: "#F8F4ED" },
+    { name: "Antrasit", hex: "#3B3F45" },
+  ];
+
   for (const p of PRODUCTS) {
     const { images, ...productData } = p;
-    const productPayload = {
+    const isSofa = productData.category === ProductCategory.KANEPE || productData.category === ProductCategory.KOLTUK;
+    const productPayload: any = {
       ...productData,
       price: new Prisma.Decimal(productData.price),
       vatRate: new Prisma.Decimal(productData.vatRate ?? "20.00"),
       weightKg: productData.weightKg ? new Prisma.Decimal(productData.weightKg) : null,
       unit: productData.unit ?? "adet",
+      availableFabricColors: isSofa ? SOFA_FABRIC_COLORS : FIREPLACE_COLORS,
+      availableCompositions: isSofa ? SOFA_COMPOSITIONS : null,
+      availableAddons: isSofa ? SOFA_ADDONS : null,
     };
 
     const product = await prisma.product.upsert({
@@ -410,6 +454,8 @@ async function main() {
       create: productPayload,
     });
 
+    // Görselleri sıfırdan yükle
+    await prisma.productImage.deleteMany({ where: { productId: product.id } });
     for (let i = 0; i < images.length; i++) {
       const img = images[i];
       await prisma.productImage.create({
@@ -422,6 +468,20 @@ async function main() {
         },
       });
     }
+
+    // Stok'u her depoya dağıt — %70 ana depo, %30 istanbul
+    const main = Math.round(productData.stockQuantity * 0.7);
+    const ist = productData.stockQuantity - main;
+    await prisma.warehouseStock.upsert({
+      where: { warehouseId_productId: { warehouseId: mainWh.id, productId: product.id } },
+      update: { stockQuantity: main },
+      create: { warehouseId: mainWh.id, productId: product.id, stockQuantity: main },
+    });
+    await prisma.warehouseStock.upsert({
+      where: { warehouseId_productId: { warehouseId: istWh.id, productId: product.id } },
+      update: { stockQuantity: ist },
+      create: { warehouseId: istWh.id, productId: product.id, stockQuantity: ist },
+    });
   }
 
   // Müşteriye özel fiyat örneği — Ahmet Yılmaz Bouclé Normal'ı özel fiyatla alıyor

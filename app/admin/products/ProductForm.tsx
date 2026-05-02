@@ -100,6 +100,28 @@ export default function ProductForm({ action, defaults, submitLabel = "Kaydet" }
         <Textarea label="Bakım talimatları" name="careInstructions" defaultValue={d.careInstructions ?? ""} rows={2} />
       </Section>
 
+      <Section title="Konfigüratör Seçenekleri (JSON)">
+        <p className="text-xs text-slate-500 -mt-2">Müşteri ürün sayfasında bu seçenekleri görür. Boş bırakılırsa konfigüratör gösterilmez.</p>
+        <Textarea
+          label='Kumaş renkleri — örn. [{"name":"Krem","hex":"#F5EDE0"}]'
+          name="availableFabricColors"
+          defaultValue={typeof d.availableFabricColors === "string" ? d.availableFabricColors : JSON.stringify(d.availableFabricColors ?? [], null, 2)}
+          rows={3}
+        />
+        <Textarea
+          label='Kompozisyonlar — örn. [{"label":"Üçlü","priceMultiplier":1}]'
+          name="availableCompositions"
+          defaultValue={typeof d.availableCompositions === "string" ? d.availableCompositions : JSON.stringify(d.availableCompositions ?? [], null, 2)}
+          rows={3}
+        />
+        <Textarea
+          label='Add-on ürünler — örn. [{"label":"Şömine","priceDelta":16000}]'
+          name="availableAddons"
+          defaultValue={typeof d.availableAddons === "string" ? d.availableAddons : JSON.stringify(d.availableAddons ?? [], null, 2)}
+          rows={3}
+        />
+      </Section>
+
       {state.error ? (
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{state.error}</p>
       ) : null}

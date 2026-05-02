@@ -51,7 +51,15 @@ const productSchema = z.object({
   warrantyMonths: optInt,
   leadTimeDays: optInt,
   careInstructions: z.string().trim().max(2000).optional().or(z.literal("")),
+  availableFabricColors: z.string().optional().or(z.literal("")),
+  availableCompositions: z.string().optional().or(z.literal("")),
+  availableAddons: z.string().optional().or(z.literal("")),
 });
+
+function parseJsonOrNull(s?: string): any {
+  if (!s || !s.trim()) return null;
+  try { return JSON.parse(s); } catch { return null; }
+}
 
 export type ProductFormState = { error?: string; ok?: boolean };
 
@@ -86,6 +94,9 @@ function fd(form: FormData) {
     warrantyMonths: form.get("warrantyMonths"),
     leadTimeDays: form.get("leadTimeDays"),
     careInstructions: form.get("careInstructions") ?? "",
+    availableFabricColors: form.get("availableFabricColors") ?? "",
+    availableCompositions: form.get("availableCompositions") ?? "",
+    availableAddons: form.get("availableAddons") ?? "",
   };
 }
 
@@ -120,6 +131,9 @@ function dataFromParsed(data: z.infer<typeof productSchema>) {
     warrantyMonths: data.warrantyMonths ?? null,
     leadTimeDays: data.leadTimeDays ?? null,
     careInstructions: data.careInstructions || null,
+    availableFabricColors: parseJsonOrNull(data.availableFabricColors as any) ?? undefined,
+    availableCompositions: parseJsonOrNull(data.availableCompositions as any) ?? undefined,
+    availableAddons: parseJsonOrNull(data.availableAddons as any) ?? undefined,
   };
 }
 

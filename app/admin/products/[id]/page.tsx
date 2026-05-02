@@ -63,6 +63,9 @@ export default async function EditProductPage({ params }: { params: { id: string
             warrantyMonths: product.warrantyMonths ?? "",
             leadTimeDays: product.leadTimeDays ?? "",
             careInstructions: product.careInstructions ?? "",
+            availableFabricColors: product.availableFabricColors,
+            availableCompositions: product.availableCompositions,
+            availableAddons: product.availableAddons,
           }}
           submitLabel="Güncelle"
         />

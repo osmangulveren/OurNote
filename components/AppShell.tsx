@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signOut } from "@/auth";
+import NotificationBell from "@/components/NotificationBell";
 
 export interface NavItem {
   href: string;
@@ -38,6 +39,7 @@ export default function AppShell({
             </nav>
           </div>
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <span className="text-xs text-slate-500 hidden sm:inline">
               {user.name ? `${user.name} · ` : ""}
               {user.email}

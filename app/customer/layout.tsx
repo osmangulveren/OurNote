@@ -1,5 +1,6 @@
 import { requireCustomer } from "@/lib/auth/session";
 import AppShell from "@/components/AppShell";
+import ChatWidget from "@/components/ChatWidget";
 import { prisma } from "@/lib/prisma";
 
 export default async function CustomerLayout({ children }: { children: React.ReactNode }) {
@@ -18,8 +19,9 @@ export default async function CustomerLayout({ children }: { children: React.Rea
   ];
 
   return (
-    <AppShell title="B2B Tedarik · Müşteri" user={session.user as any} nav={nav}>
+    <AppShell title="Rosadore Home · Müşteri" user={session.user as any} nav={nav}>
       {children}
+      <ChatWidget />
     </AppShell>
   );
 }
