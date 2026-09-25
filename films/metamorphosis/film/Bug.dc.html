@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gregor</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 300px; height: 200px; position: relative">
+<svg width="300" height="200" viewBox="0 0 300 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<g class="{{legsClass}}" stroke="#1a110a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+<path class="bug-leg l1" d="M200 70 L218 34 L246 18"></path>
+<path class="bug-leg l2" d="M170 66 L168 22 L184 2"></path>
+<path class="bug-leg l3" d="M130 60 L104 22 L86 6"></path>
+<path class="bug-leg l1" d="M200 130 L218 166 L246 182"></path>
+<path class="bug-leg l2" d="M170 134 L168 178 L184 198"></path>
+<path class="bug-leg l3" d="M130 140 L104 178 L86 194"></path>
+</g>
+<path d="M268 88 C 282 60, 292 44, 298 30" stroke="#1a110a" stroke-width="3" stroke-linecap="round" class="bug-antenna"></path>
+<path d="M268 112 C 282 140, 292 156, 298 170" stroke="#1a110a" stroke-width="3" stroke-linecap="round" class="bug-antenna"></path>
+<ellipse cx="128" cy="100" rx="98" ry="64" fill="{{shell}}" stroke="#140d07" stroke-width="3"></ellipse>
+<path d="M60 48 C 50 80, 50 120, 60 152" stroke="#140d07" stroke-width="3" opacity="0.8"></path>
+<path d="M92 38 C 80 76, 80 124, 92 162" stroke="#140d07" stroke-width="3" opacity="0.8"></path>
+<path d="M126 36 C 114 76, 114 124, 126 164" stroke="#140d07" stroke-width="3" opacity="0.8"></path>
+<path d="M160 40 C 150 78, 150 122, 160 160" stroke="#140d07" stroke-width="3" opacity="0.8"></path>
+<path d="M192 50 C 184 80, 184 120, 192 150" stroke="#140d07" stroke-width="3" opacity="0.8"></path>
+<ellipse cx="120" cy="78" rx="70" ry="16" fill="#e8c78c" opacity="{{sheen}}"></ellipse>
+<ellipse cx="232" cy="100" rx="30" ry="38" fill="{{shell}}" stroke="#140d07" stroke-width="3"></ellipse>
+<ellipse cx="266" cy="100" rx="16" ry="20" fill="#231710" stroke="#140d07" stroke-width="3"></ellipse>
+<sc-if value="{{apple}}" hint-placeholder-val="{{ false }}">
+<circle cx="112" cy="92" r="17" fill="#6e1510"></circle>
+<circle cx="112" cy="92" r="17" fill="#3b2410" opacity="{{rot}}"></circle>
+<path d="M112 76 L115 68" stroke="#2a1a0c" stroke-width="3" stroke-linecap="round"></path>
+</sc-if>
+</svg>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"apple":{"editor":"boolean","default":false},"dead":{"editor":"boolean","default":false},"belly":{"editor":"boolean","default":false},"rotten":{"editor":"boolean","default":false},"$preview":{"width":300,"height":200}}'>
+class Component extends DCLogic {
+renderVals() {
+const dead = !!this.props.dead;
+const belly = !!this.props.belly;
+return {
+apple: !!this.props.apple,
+rot: this.props.rotten ? 0.55 : 0,
+legsClass: dead ? 'bug-legs bug-dead' : 'bug-legs',
+shell: belly ? '#6a5236' : (dead ? '#2e2217' : '#46321f'),
+sheen: dead ? 0.05 : 0.18
+};
+}
+}
+</script>
+</body>
+</html>
