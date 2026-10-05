@@ -1,81 +1,80 @@
-"use client";
+import type { Category, Product } from "@prisma/client";
+import { saveProduct } from "@/app/actions/admin";
+import { parseJson } from "@/lib/format";
 
-import { useFormState, useFormStatus } from "react-dom";
-import type { ProductFormState } from "@/lib/products/actions";
-
-const initial: ProductFormState = {};
-
-interface Props {
-  action: (prev: ProductFormState, fd: FormData) => Promise<ProductFormState>;
-  defaults?: {
-    sku?: string;
-    name?: string;
-    description?: string | null;
-    unit?: string;
-    price?: string;
-    vatRate?: string;
-    stockQuantity?: number;
-    isActive?: boolean;
-  };
-  submitLabel?: string;
-}
-
-export default function ProductForm({ action, defaults, submitLabel = "Kaydet" }: Props) {
-  const [state, formAction] = useFormState(action, initial);
-  return (
-    <form action={formAction} className="space-y-4 max-w-2xl">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="SKU" name="sku" defaultValue={defaults?.sku} required />
-        <Field label="Birim (adet, paket, …)" name="unit" defaultValue={defaults?.unit ?? "adet"} required />
-      </div>
-      <Field label="Ürün adı" name="name" defaultValue={defaults?.name} required />
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Açıklama</label>
-        <textarea
-          name="description"
-          defaultValue={defaults?.description ?? ""}
-          rows={3}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2"
-        />
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Field label="Birim fiyat (TL)" name="price" type="number" step="0.01" min="0" defaultValue={defaults?.price ?? "0"} required />
-        <Field label="KDV (%)" name="vatRate" type="number" step="0.01" min="0" max="100" defaultValue={defaults?.vatRate ?? "20"} required />
-        <Field label="Stok miktarı" name="stockQuantity" type="number" min="0" defaultValue={String(defaults?.stockQuantity ?? 0)} required />
-      </div>
-      <label className="inline-flex items-center gap-2 text-sm">
-        <input type="checkbox" name="isActive" defaultChecked={defaults?.isActive ?? true} />
-        Aktif (müşteriler katalogda görsün)
-      </label>
-
-      {state.error ? (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{state.error}</p>
-      ) : null}
-
-      <Submit label={submitLabel} />
-    </form>
-  );
-}
-
-function Field(props: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
-  const { label, ...rest } = props;
-  return (
-    <div>
-      <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
-      <input {...rest} className="w-full rounded-lg border border-slate-300 px-3 py-2" />
+export default function ProductForm({ product, categories }: { product?: Product; categories: Category[] }) {
+  const tiers = parseJson<{ minQty: number; price: number }[]>(product?.priceTiers, []);
+  const specs = parseJson<{ label: string; value: string }[]>(product?.specs, []);
+  const F = ({ name, label, def, type = "text", span }: { name: string; label: string; def?: string | number; type?: string; span?: boolean }) => (
+    <div className={span ? "sm:col-span-2" : ""}>
+      <label className="label">{label}</label>
+      <input name={name} type={type} step={type === "number" ? "any" : undefined} defaultValue={def ?? ""} className="input" />
     </div>
   );
-}
-
-function Submit({ label }: { label: string }) {
-  const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-medium px-5 py-2.5 rounded-lg"
-    >
-      {pending ? "Kaydediliyor…" : label}
-    </button>
+    <form action={saveProduct} className="space-y-6">
+      <input type="hidden" name="id" value={product?.id ?? ""} />
+      <section className="card grid gap-4 p-6 sm:grid-cols-2">
+        <h2 className="font-bold sm:col-span-2">Basics</h2>
+        <F name="name" label="Product name (your brand)" def={product?.name} span />
+        <F name="sku" label="SKU" def={product?.sku} />
+        <div>
+          <label className="label">Category</label>
+          <select name="categoryId" defaultValue={product?.categoryId} className="input" required>
+            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </div>
+        <F name="shortDescription" label="Short description (one line)" def={product?.shortDescription} span />
+        <div className="sm:col-span-2">
+          <label className="label">Description</label>
+          <textarea name="description" rows={4} defaultValue={product?.description} className="input" />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="label">Image URLs (one per line)</label>
+          <textarea name="images" rows={3} defaultValue={parseJson<string[]>(product?.images, []).join("\n")} className="input font-mono text-xs" />
+        </div>
+        <div className="flex gap-6 sm:col-span-2">
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="active" defaultChecked={product?.active ?? true} /> Active (visible)</label>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="featured" defaultChecked={product?.featured} /> Best seller (home page)</label>
+        </div>
+      </section>
+
+      <section className="card grid gap-4 p-6 sm:grid-cols-3">
+        <h2 className="font-bold sm:col-span-3">Wholesale pricing (EUR, excl. VAT)</h2>
+        <F name="price" label="Base price / unit" def={product?.price} type="number" />
+        <F name="moq" label="Minimum order qty" def={product?.moq ?? 1} type="number" />
+        <F name="unit" label="Unit (pcs, set…)" def={product?.unit ?? "pcs"} />
+        <div className="sm:col-span-3">
+          <label className="label">Volume tiers — one per line as quantity:price</label>
+          <textarea name="priceTiers" rows={3} defaultValue={tiers.map((t) => `${t.minQty}:${t.price}`).join("\n")} className="input font-mono text-xs" placeholder={"10:369\n30:349"} />
+        </div>
+      </section>
+
+      <section className="card grid gap-4 p-6 sm:grid-cols-3">
+        <h2 className="font-bold sm:col-span-3">Product & logistics data</h2>
+        <F name="dimensions" label="Dimensions" def={product?.dimensions} />
+        <F name="material" label="Material / fabric" def={product?.material} />
+        <F name="colors" label="Colours (comma separated)" def={parseJson<string[]>(product?.colors, []).join(", ")} />
+        <F name="volumeM3" label="Packed volume m³ / unit" def={product?.volumeM3} type="number" />
+        <F name="weightKg" label="Packed weight kg / unit" def={product?.weightKg} type="number" />
+        <F name="unitsPerCarton" label="Packages per unit" def={product?.unitsPerCarton ?? 1} type="number" />
+        <F name="leadTimeDays" label="Production lead time (days)" def={product?.leadTimeDays ?? 21} type="number" />
+        <div className="sm:col-span-3">
+          <label className="label">Specifications — one per line as Label: Value</label>
+          <textarea name="specs" rows={5} defaultValue={specs.map((s) => `${s.label}: ${s.value}`).join("\n")} className="input font-mono text-xs" />
+        </div>
+      </section>
+
+      <section className="card grid gap-4 border-dashed bg-slate-50 p-6 sm:grid-cols-3">
+        <div className="sm:col-span-3">
+          <h2 className="font-bold">Sourcing (internal — never shown to buyers)</h2>
+        </div>
+        <F name="supplierName" label="Manufacturer" def={product?.supplierName} />
+        <F name="supplierPrice" label="Purchase price (EUR)" def={product?.supplierPrice} type="number" />
+        <F name="sourceUrl" label="Source URL (e.g. Alibaba)" def={product?.sourceUrl} />
+      </section>
+
+      <button className="btn-primary">Save product</button>
+    </form>
   );
 }

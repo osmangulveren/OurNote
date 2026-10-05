@@ -1,134 +1,88 @@
-import { PrismaClient, Role } from "@prisma/client";
+import { readFileSync } from "node:fs";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { importCatalog } from "../lib/catalog-import";
+import { computeTotals, unitPrice } from "../lib/pricing";
 
-const prisma = new PrismaClient();
+const db = new PrismaClient();
 
 async function main() {
-  console.log("→ Seeding database…");
-
-  const adminPass = await bcrypt.hash("admin123", 10);
-  const customerPass = await bcrypt.hash("customer123", 10);
-
-  const admin = await prisma.user.upsert({
-    where: { email: "admin@example.com" },
+  const adminEmail = process.env.ADMIN_EMAIL || "admin@example.com";
+  const adminPassword = process.env.ADMIN_PASSWORD || "admin12345";
+  await db.user.upsert({
+    where: { email: adminEmail },
+    create: { email: adminEmail, name: "Admin", role: "ADMIN", passwordHash: await bcrypt.hash(adminPassword, 10) },
     update: {},
-    create: {
-      email: "admin@example.com",
-      name: "Sistem Yöneticisi",
-      passwordHash: adminPass,
-      role: Role.ADMIN,
+  });
+
+  const result = await importCatalog(db, JSON.parse(readFileSync("data/catalog.json", "utf8")));
+  console.log(`Catalog: ${result.created} created, ${result.updated} updated`);
+
+  // Demo buyer with one order on a truck, so tracking can be seen immediately.
+  if (await db.user.findUnique({ where: { email: "buyer@example.com" } })) return;
+  const company = await db.company.create({
+    data: {
+      name: "Casa Mobila Demo SRL", vatNumber: "DE123456789", country: "DE", city: "Munich",
+      address: "Musterstraße 12", postalCode: "80331", phone: "+49 89 000000", status: "APPROVED",
+    },
+  });
+  const buyer = await db.user.create({
+    data: {
+      email: "buyer@example.com", name: "Demo Buyer", role: "BUYER", companyId: company.id,
+      passwordHash: await bcrypt.hash("buyer12345", 10),
     },
   });
 
-  const customer1 = await prisma.user.upsert({
-    where: { email: "musteri1@example.com" },
-    update: {},
-    create: {
-      email: "musteri1@example.com",
-      name: "Ahmet Yılmaz",
-      passwordHash: customerPass,
-      role: Role.CUSTOMER,
-      customerProfile: {
-        create: {
-          companyName: "Yılmaz Ticaret Ltd. Şti.",
-          taxNumber: "1112223334",
-          phone: "+90 532 000 00 01",
-          address: "İstanbul",
-        },
+  const products = await db.product.findMany({ where: { sku: { in: ["SB-190", "AC-095"] } } });
+  const lines = products.map((p) => {
+    const quantity = p.moq * 3;
+    return { p, quantity, unitPrice: unitPrice(p, quantity), volumeM3: p.volumeM3 };
+  });
+  const totals = computeTotals({ lines, country: company.country, vatNumber: company.vatNumber });
+
+  const truck = await db.shipment.create({
+    data: {
+      code: "TIR-2026-001", truckPlate: "34 ABC 123", trailerPlate: "34 TR 456", driverName: "Mehmet Y.",
+      carrier: "Own fleet", route: "Istanbul → Kapıkule → Sofia → Bucharest → Budapest → Munich",
+      stage: "AT_BORDER", departedAt: new Date(Date.now() - 2 * 864e5), eta: new Date(Date.now() + 4 * 864e5),
+      events: {
+        create: [
+          { stage: "LOADING", location: "Istanbul, TR", note: "Loading started", createdAt: new Date(Date.now() - 3 * 864e5) },
+          { stage: "DEPARTED", location: "Istanbul, TR", note: "Truck departed", createdAt: new Date(Date.now() - 2 * 864e5) },
+          { stage: "AT_BORDER", location: "Kapıkule / Kapitan Andreevo", note: "Waiting for customs clearance", createdAt: new Date(Date.now() - 864e5) },
+        ],
       },
-      cart: { create: {} },
     },
   });
 
-  const customer2 = await prisma.user.upsert({
-    where: { email: "musteri2@example.com" },
-    update: {},
-    create: {
-      email: "musteri2@example.com",
-      name: "Ayşe Kaya",
-      passwordHash: customerPass,
-      role: Role.CUSTOMER,
-      customerProfile: {
-        create: {
-          companyName: "Kaya Endüstri A.Ş.",
-          taxNumber: "5556667778",
-          phone: "+90 532 000 00 02",
-          address: "İzmir",
-        },
+  await db.order.create({
+    data: {
+      number: "ORD-2026-0001", companyId: company.id, userId: buyer.id, status: "CUSTOMS",
+      paymentMethod: "BANK_TRANSFER", paymentStatus: "PAID", paidAt: new Date(Date.now() - 10 * 864e5),
+      subtotal: totals.subtotal, freight: totals.freight, vatRate: totals.vatRate, vatAmount: totals.vatAmount,
+      total: totals.total, vatNote: totals.vatNote, totalVolumeM3: totals.volume,
+      deliveryName: company.name, deliveryAddress: company.address, deliveryCity: company.city,
+      deliveryPostal: company.postalCode, deliveryCountry: company.country, deliveryPhone: company.phone,
+      shipmentId: truck.id,
+      items: {
+        create: lines.map((l) => ({
+          productId: l.p.id, sku: l.p.sku, name: l.p.name, unitPrice: l.unitPrice, quantity: l.quantity,
+          lineTotal: Math.round(l.unitPrice * l.quantity * 100) / 100, volumeM3: l.p.volumeM3,
+        })),
       },
-      cart: { create: {} },
+      events: {
+        create: [
+          { status: "PENDING_PAYMENT", createdAt: new Date(Date.now() - 14 * 864e5) },
+          { status: "CONFIRMED", note: "Bank transfer received", createdAt: new Date(Date.now() - 10 * 864e5) },
+          { status: "IN_PRODUCTION", createdAt: new Date(Date.now() - 9 * 864e5) },
+          { status: "LOADING", createdAt: new Date(Date.now() - 3 * 864e5) },
+          { status: "IN_TRANSIT", createdAt: new Date(Date.now() - 2 * 864e5) },
+          { status: "CUSTOMS", note: "Kapıkule border", createdAt: new Date(Date.now() - 864e5) },
+        ],
+      },
     },
   });
-
-  const products = [
-    {
-      sku: "VIDA-M6-25",
-      name: "Vida M6x25 Galvanizli",
-      description: "Galvanizli paslanmaz vida, paket içi 100 adet.",
-      unit: "paket",
-      price: "45.00",
-      vatRate: "20.00",
-      stockQuantity: 500,
-    },
-    {
-      sku: "SOMUN-M6",
-      name: "Somun M6 Çelik",
-      description: "Çelik altıgen somun, paket içi 200 adet.",
-      unit: "paket",
-      price: "30.00",
-      vatRate: "20.00",
-      stockQuantity: 350,
-    },
-    {
-      sku: "PUL-M6",
-      name: "Pul M6 Galvaniz",
-      description: "Düz pul, paket içi 500 adet.",
-      unit: "paket",
-      price: "20.00",
-      vatRate: "20.00",
-      stockQuantity: 600,
-    },
-    {
-      sku: "KABLO-2.5",
-      name: "NYA Kablo 2.5mm² (100m)",
-      description: "Tek damarlı bakır kablo, 100 metre rulo.",
-      unit: "rulo",
-      price: "850.00",
-      vatRate: "20.00",
-      stockQuantity: 75,
-    },
-    {
-      sku: "PRIZ-TOP",
-      name: "Topraklı Priz",
-      description: "16A topraklı sıva üstü priz.",
-      unit: "adet",
-      price: "55.00",
-      vatRate: "20.00",
-      stockQuantity: 240,
-    },
-    {
-      sku: "AMP-LED-9W",
-      name: "LED Ampul 9W E27",
-      description: "9W E27 duylu LED ampul, 6500K.",
-      unit: "adet",
-      price: "32.00",
-      vatRate: "10.00",
-      stockQuantity: 180,
-    },
-  ];
-
-  for (const p of products) {
-    await prisma.product.upsert({
-      where: { sku: p.sku },
-      update: {},
-      create: p,
-    });
-  }
-
-  console.log("✓ Admin:", admin.email, "(password: admin123)");
-  console.log("✓ Customer 1:", customer1.email, "(password: customer123)");
-  console.log("✓ Customer 2:", customer2.email, "(password: customer123)");
-  console.log(`✓ Products: ${products.length}`);
+  console.log("Demo buyer: buyer@example.com / buyer12345");
 }
 
 main()
@@ -136,6 +90,4 @@ main()
     console.error(e);
     process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .finally(() => db.$disconnect());

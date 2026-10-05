@@ -1,34 +1,24 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { db } from "@/lib/db";
 import ProductForm from "../ProductForm";
-import { prisma } from "@/lib/prisma";
-import { updateProduct } from "@/lib/products/actions";
 
-export default async function EditProductPage({ params }: { params: { id: string } }) {
-  const product = await prisma.product.findUnique({ where: { id: params.id } });
+export const metadata = { title: "Edit product" };
+
+export default async function EditProduct({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const [product, categories] = await Promise.all([
+    db.product.findUnique({ where: { id } }),
+    db.category.findMany({ orderBy: { sortOrder: "asc" } }),
+  ]);
   if (!product) notFound();
-
-  const action = updateProduct.bind(null, product.id);
-
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold">Ürün Düzenle</h1>
-        <p className="text-sm text-slate-500">Rezerve: {product.reservedQuantity} (sipariş bekleyen)</p>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="h1">{product.name}</h1>
+        <Link href={`/products/${product.slug}`} className="btn-outline" target="_blank">View in shop</Link>
       </div>
-      <ProductForm
-        action={action}
-        defaults={{
-          sku: product.sku,
-          name: product.name,
-          description: product.description ?? "",
-          unit: product.unit,
-          price: product.price.toString(),
-          vatRate: product.vatRate.toString(),
-          stockQuantity: product.stockQuantity,
-          isActive: product.isActive,
-        }}
-        submitLabel="Güncelle"
-      />
+      <ProductForm product={product} categories={categories} />
     </div>
   );
 }

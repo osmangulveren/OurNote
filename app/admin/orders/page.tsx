@@ -1,49 +1,48 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import { formatTRY } from "@/lib/money";
+import StatusBadge from "@/components/StatusBadge";
+import { countryName } from "@/lib/config";
+import { db } from "@/lib/db";
+import { cbm, date, money } from "@/lib/format";
+import { ORDER_STATUS_LABEL, ORDER_STATUSES } from "@/lib/status";
 
-export default async function AdminOrdersPage() {
-  const orders = await prisma.order.findMany({
+export const metadata = { title: "Orders" };
+
+export default async function AdminOrders({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+  const { status } = await searchParams;
+  const orders = await db.order.findMany({
+    where: status ? { status } : {},
+    include: { company: true, shipment: true },
     orderBy: { createdAt: "desc" },
-    include: { user: true, invoice: true },
-    take: 100,
   });
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Siparişler</h1>
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-600">
-            <tr>
-              <th className="px-4 py-2">Sipariş No</th>
-              <th className="px-4 py-2">Tarih</th>
-              <th className="px-4 py-2">Müşteri</th>
-              <th className="px-4 py-2">Durum</th>
-              <th className="px-4 py-2">Fatura</th>
-              <th className="px-4 py-2 text-right">Tutar</th>
-            </tr>
-          </thead>
+    <div className="space-y-6">
+      <h1 className="h1">Orders</h1>
+      <div className="flex flex-wrap gap-2 text-sm">
+        <Link href="/admin/orders" className={`rounded-full px-3 py-1 ${!status ? "bg-brand-600 text-white" : "bg-white ring-1 ring-slate-200"}`}>All</Link>
+        {ORDER_STATUSES.map((s) => (
+          <Link key={s} href={`/admin/orders?status=${s}`} className={`rounded-full px-3 py-1 ${status === s ? "bg-brand-600 text-white" : "bg-white ring-1 ring-slate-200"}`}>{ORDER_STATUS_LABEL[s]}</Link>
+        ))}
+      </div>
+      <div className="card overflow-x-auto">
+        <table className="table">
+          <thead><tr><th>Order</th><th>Customer</th><th>Destination</th><th>Date</th><th className="text-right">Total</th><th>Volume</th><th>Payment</th><th>Truck</th><th>Status</th></tr></thead>
           <tbody>
-            {orders.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-4 text-slate-500">Henüz sipariş yok.</td></tr>
-            ) : orders.map((o) => (
-              <tr key={o.id} className="border-t border-slate-100">
-                <td className="px-4 py-2">
-                  <Link href={`/admin/orders/${o.id}`} className="hover:underline font-medium">{o.orderNumber}</Link>
-                </td>
-                <td className="px-4 py-2 text-slate-600">{o.createdAt.toLocaleString("tr-TR")}</td>
-                <td className="px-4 py-2">{o.user.email}</td>
-                <td className="px-4 py-2"><span className="inline-block text-xs bg-slate-100 px-2 py-0.5 rounded">{o.status}</span></td>
-                <td className="px-4 py-2 text-xs">
-                  {o.invoice ? (
-                    <Link href={`/invoices/${o.invoice.id}`} className="text-emerald-700 hover:underline">{o.invoice.invoiceNumber}</Link>
-                  ) : <span className="text-slate-400">—</span>}
-                </td>
-                <td className="px-4 py-2 text-right">{formatTRY(o.grandTotal as any)}</td>
+            {orders.map((o) => (
+              <tr key={o.id}>
+                <td><Link href={`/admin/orders/${o.id}`} className="font-mono font-semibold text-brand-600">{o.number}</Link></td>
+                <td>{o.company.name}</td>
+                <td>{o.deliveryCity}, {countryName(o.deliveryCountry)}</td>
+                <td>{date(o.createdAt)}</td>
+                <td className="text-right font-semibold">{money(o.total)}</td>
+                <td>{cbm(o.totalVolumeM3)}</td>
+                <td>{o.paymentStatus === "PAID" ? <span className="badge bg-emerald-100 text-emerald-800">Paid</span> : <span className="badge bg-amber-100 text-amber-800">{o.paymentMethod === "STRIPE" ? "Card – unpaid" : "Transfer – unpaid"}</span>}</td>
+                <td>{o.shipment ? <Link href={`/admin/shipments/${o.shipment.id}`} className="text-brand-600">{o.shipment.code}</Link> : "—"}</td>
+                <td><StatusBadge status={o.status} /></td>
               </tr>
             ))}
           </tbody>
         </table>
+        {orders.length === 0 && <p className="p-6 text-center text-slate-500">No orders.</p>}
       </div>
     </div>
   );

@@ -1,51 +1,49 @@
-import { prisma } from "@/lib/prisma";
-import { formatTRY } from "@/lib/money";
+import { setCompanyStatus } from "@/app/actions/admin";
+import { countryName } from "@/lib/config";
+import { db } from "@/lib/db";
+import { date } from "@/lib/format";
 
-export default async function AdminCustomersPage() {
-  const customers = await prisma.user.findMany({
-    where: { role: "CUSTOMER" },
-    include: {
-      customerProfile: true,
-      orders: { select: { grandTotal: true, status: true } },
-    },
-    orderBy: { createdAt: "desc" },
+export const metadata = { title: "Customers" };
+
+const tone: Record<string, string> = {
+  PENDING: "bg-amber-100 text-amber-800", APPROVED: "bg-emerald-100 text-emerald-800", REJECTED: "bg-red-100 text-red-700",
+};
+
+export default async function CustomersPage() {
+  const companies = await db.company.findMany({
+    include: { users: true, _count: { select: { orders: true } } },
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
   });
-
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Müşteriler</h1>
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-600">
-            <tr>
-              <th className="px-4 py-2">Email</th>
-              <th className="px-4 py-2">Ad Soyad</th>
-              <th className="px-4 py-2">Firma</th>
-              <th className="px-4 py-2">VKN</th>
-              <th className="px-4 py-2 text-right">Sipariş</th>
-              <th className="px-4 py-2 text-right">Ciro</th>
-            </tr>
-          </thead>
+    <div className="space-y-6">
+      <h1 className="h1">Customers</h1>
+      <div className="card overflow-x-auto">
+        <table className="table">
+          <thead><tr><th>Company</th><th>Country</th><th>VAT</th><th>Contact</th><th>Orders</th><th>Applied</th><th>Status</th><th /></tr></thead>
           <tbody>
-            {customers.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-4 text-slate-500">Henüz müşteri yok.</td></tr>
-            ) : customers.map((c) => {
-              const validOrders = c.orders.filter((o) => o.status !== "CANCELLED");
-              const total = validOrders.reduce((s, o) => s + Number(o.grandTotal as any), 0);
-              return (
-                <tr key={c.id} className="border-t border-slate-100">
-                  <td className="px-4 py-2">{c.email}</td>
-                  <td className="px-4 py-2">{c.name ?? "—"}</td>
-                  <td className="px-4 py-2">{c.customerProfile?.companyName ?? "—"}</td>
-                  <td className="px-4 py-2">{c.customerProfile?.taxNumber ?? "—"}</td>
-                  <td className="px-4 py-2 text-right">{validOrders.length}</td>
-                  <td className="px-4 py-2 text-right">{formatTRY(total)}</td>
-                </tr>
-              );
-            })}
+            {companies.map((c) => (
+              <tr key={c.id}>
+                <td><div className="font-semibold">{c.name}</div><div className="text-xs text-slate-500">{c.address}, {c.postalCode} {c.city}</div></td>
+                <td>{countryName(c.country)}</td>
+                <td className="font-mono text-xs">{c.vatNumber ?? "—"}</td>
+                <td className="text-xs">{c.users.map((u) => <div key={u.id}>{u.name} · {u.email}</div>)}<div>{c.phone}</div></td>
+                <td>{c._count.orders}</td>
+                <td>{date(c.createdAt)}</td>
+                <td><span className={`badge ${tone[c.status]}`}>{c.status}</span></td>
+                <td className="whitespace-nowrap text-right">
+                  {c.status !== "APPROVED" && (
+                    <form action={setCompanyStatus} className="inline"><input type="hidden" name="id" value={c.id} /><input type="hidden" name="status" value="APPROVED" /><button className="btn-primary px-3 py-1 text-xs">Approve</button></form>
+                  )}
+                  {c.status !== "REJECTED" && (
+                    <form action={setCompanyStatus} className="ml-1 inline"><input type="hidden" name="id" value={c.id} /><input type="hidden" name="status" value="REJECTED" /><button className="btn-danger px-3 py-1 text-xs">{c.status === "APPROVED" ? "Block" : "Reject"}</button></form>
+                  )}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
+      <p className="muted">Tip: verify EU VAT numbers at ec.europa.eu/taxation_customs/vies before approving — reverse-charge invoicing depends on a valid VAT ID.</p>
     </div>
   );
 }

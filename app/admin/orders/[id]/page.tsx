@@ -1,164 +1,86 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { OrderStatus } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
-import { formatTRY, formatPercent } from "@/lib/money";
-import { updateOrderStatus } from "@/lib/orders/actions";
-import { createInvoiceDraft } from "@/lib/invoices/actions";
+import OrderItemsTable from "@/components/OrderItemsTable";
+import { OrderStepper } from "@/components/OrderTracker";
+import StatusBadge from "@/components/StatusBadge";
+import TotalsBox from "@/components/TotalsBox";
+import { adminMarkPaid, assignOrderToShipment, updateOrderStatus } from "@/app/actions/admin";
+import { countryName } from "@/lib/config";
+import { db } from "@/lib/db";
+import { dateTime, money } from "@/lib/format";
+import { ORDER_STATUS_LABEL, ORDER_STATUSES } from "@/lib/status";
 
-const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  PENDING: ["APPROVED", "CANCELLED"],
-  APPROVED: ["PREPARING", "CANCELLED"],
-  PREPARING: ["SHIPPED", "CANCELLED"],
-  SHIPPED: [],
-  CANCELLED: [],
-};
+export const metadata = { title: "Order" };
 
-export default async function AdminOrderDetailPage({ params }: { params: { id: string } }) {
-  const order = await prisma.order.findUnique({
-    where: { id: params.id },
-    include: {
-      items: true,
-      user: { include: { customerProfile: true } },
-      invoice: true,
-      stockMovements: { orderBy: { createdAt: "desc" } },
-    },
+export default async function AdminOrder({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const order = await db.order.findUnique({
+    where: { id },
+    include: { company: true, user: true, items: { include: { product: true } }, events: { orderBy: { createdAt: "asc" } }, shipment: true },
   });
   if (!order) notFound();
-
-  const allowed = TRANSITIONS[order.status];
+  const trucks = await db.shipment.findMany({ where: { stage: { in: ["PLANNED", "LOADING"] } }, orderBy: { createdAt: "desc" } });
+  const cost = order.items.reduce((s, i) => s + i.product.supplierPrice * i.quantity, 0);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">{order.orderNumber}</h1>
-          <p className="text-sm text-slate-500">{order.createdAt.toLocaleString("tr-TR")}</p>
+          <Link href="/admin/orders" className="muted">← Orders</Link>
+          <h1 className="h1 mt-1 flex items-center gap-3">{order.number} <StatusBadge status={order.status} /></h1>
+          <p className="muted">{order.company.name} · {order.user.name} ({order.user.email}) · {dateTime(order.createdAt)}</p>
         </div>
-        <Link href="/admin/orders" className="text-sm text-slate-600 hover:underline">← Tüm siparişler</Link>
+        <Link href={`/orders/${order.id}/invoice`} target="_blank" className="btn-outline">Invoice</Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <section className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-5">
-          <h2 className="font-semibold mb-3">Sipariş Kalemleri</h2>
-          <table className="w-full text-sm">
-            <thead className="text-left text-slate-500">
-              <tr>
-                <th className="py-2">SKU</th>
-                <th>Ürün</th>
-                <th className="text-right">Miktar</th>
-                <th className="text-right">Birim Fiyat</th>
-                <th className="text-right">KDV</th>
-                <th className="text-right">Toplam</th>
-              </tr>
-            </thead>
-            <tbody>
-              {order.items.map((it) => (
-                <tr key={it.id} className="border-t border-slate-100">
-                  <td className="py-2 font-mono text-xs">{it.sku}</td>
-                  <td>{it.productName}</td>
-                  <td className="text-right">{it.quantity} {it.unit}</td>
-                  <td className="text-right">{formatTRY(it.unitPrice as any)}</td>
-                  <td className="text-right">{formatPercent(it.vatRate as any)}</td>
-                  <td className="text-right">{formatTRY(it.lineTotal as any)}</td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot className="text-sm">
-              <tr><td colSpan={5} className="pt-3 text-right text-slate-500">Ara toplam</td><td className="pt-3 text-right">{formatTRY(order.subtotal as any)}</td></tr>
-              <tr><td colSpan={5} className="text-right text-slate-500">KDV</td><td className="text-right">{formatTRY(order.vatTotal as any)}</td></tr>
-              <tr><td colSpan={5} className="pt-1 text-right font-semibold">Genel Toplam</td><td className="pt-1 text-right font-semibold">{formatTRY(order.grandTotal as any)}</td></tr>
-            </tfoot>
-          </table>
-        </section>
+      <section className="card p-6"><OrderStepper status={order.status} events={order.events} /></section>
 
-        <aside className="space-y-4">
-          <div className="bg-white border border-slate-200 rounded-2xl p-5">
-            <h3 className="font-semibold mb-2">Müşteri</h3>
-            <p className="text-sm">{order.user.name ?? "—"}</p>
-            <p className="text-sm text-slate-500">{order.user.email}</p>
-            {order.user.customerProfile ? (
-              <div className="text-sm text-slate-600 mt-2">
-                <p>{order.user.customerProfile.companyName}</p>
-                {order.user.customerProfile.taxNumber && <p>VKN: {order.user.customerProfile.taxNumber}</p>}
-                {order.user.customerProfile.phone && <p>{order.user.customerProfile.phone}</p>}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-2xl p-5">
-            <h3 className="font-semibold mb-2">Durum</h3>
-            <div className="text-sm mb-3">
-              Mevcut: <span className="inline-block text-xs bg-slate-900 text-white px-2 py-0.5 rounded">{order.status}</span>
-            </div>
-            {allowed.length === 0 ? (
-              <p className="text-xs text-slate-500">Sipariş tamamlandı/iptal edildi.</p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {allowed.map((next) => (
-                  <form
-                    key={next}
-                    action={async () => {
-                      "use server";
-                      await updateOrderStatus(order.id, next);
-                    }}
-                  >
-                    <button className="w-full text-sm border border-slate-300 hover:bg-slate-50 rounded-lg px-3 py-2">
-                      → {next}
-                    </button>
-                  </form>
-                )) }
-              </div>
-            )}
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-2xl p-5">
-            <h3 className="font-semibold mb-2">Fatura</h3>
-            {order.invoice ? (
-              <Link
-                href={`/invoices/${order.invoice.id}`}
-                className="block text-center bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-3 py-2 text-sm"
-              >
-                Taslak: {order.invoice.invoiceNumber}
-              </Link>
-            ) : (
-              <form
-                action={async () => {
-                  "use server";
-                  await createInvoiceDraft(order.id);
-                }}
-              >
-                <button className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-lg px-3 py-2 text-sm">
-                  Taslak fatura oluştur
-                </button>
-              </form>
-            )}
-          </div>
-        </aside>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <form action={updateOrderStatus} className="card space-y-3 p-5">
+          <h2 className="font-bold">Change status</h2>
+          <input type="hidden" name="id" value={order.id} />
+          <select name="status" defaultValue={order.status} className="input">
+            {ORDER_STATUSES.map((s) => <option key={s} value={s}>{ORDER_STATUS_LABEL[s]}</option>)}
+          </select>
+          <input name="note" placeholder="Note (visible in history)" className="input" />
+          <button className="btn-primary w-full">Update</button>
+        </form>
+        <div className="card space-y-3 p-5">
+          <h2 className="font-bold">Payment</h2>
+          <p className="text-sm">{order.paymentMethod === "STRIPE" ? "Card (Stripe)" : "Bank transfer"} · <b>{order.paymentStatus}</b></p>
+          {order.paymentStatus !== "PAID" && (
+            <form action={adminMarkPaid}><input type="hidden" name="id" value={order.id} /><button className="btn-primary w-full">Mark as paid</button></form>
+          )}
+          {cost > 0 && <p className="text-xs text-slate-500">Purchase cost {money(cost)} · gross margin {money(order.subtotal - cost)}</p>}
+        </div>
+        <div className="card space-y-3 p-5">
+          <h2 className="font-bold">Truck</h2>
+          {order.shipment ? (
+            <p className="text-sm">On <Link href={`/admin/shipments/${order.shipment.id}`} className="font-semibold text-brand-600">{order.shipment.code}</Link> ({order.shipment.truckPlate})</p>
+          ) : trucks.length > 0 ? (
+            <form action={assignOrderToShipment} className="space-y-2">
+              <input type="hidden" name="orderId" value={order.id} />
+              <select name="shipmentId" className="input">{trucks.map((t) => <option key={t.id} value={t.id}>{t.code} · {t.truckPlate}</option>)}</select>
+              <button className="btn-primary w-full">Put on truck</button>
+            </form>
+          ) : (
+            <Link href="/admin/shipments/new" className="btn-outline w-full">Plan a truck</Link>
+          )}
+        </div>
       </div>
 
-      <section className="bg-white border border-slate-200 rounded-2xl p-5">
-        <h3 className="font-semibold mb-3">Stok Hareketleri</h3>
-        {order.stockMovements.length === 0 ? (
-          <p className="text-sm text-slate-500">Henüz hareket yok.</p>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="text-left text-slate-500">
-              <tr><th>Tarih</th><th>Tip</th><th className="text-right">Miktar</th><th>Not</th></tr>
-            </thead>
-            <tbody>
-              {order.stockMovements.map((m) => (
-                <tr key={m.id} className="border-t border-slate-100">
-                  <td className="py-1.5">{m.createdAt.toLocaleString("tr-TR")}</td>
-                  <td>{m.type}</td>
-                  <td className="text-right">{m.quantity}</td>
-                  <td className="text-slate-600">{m.note}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <section className="card overflow-x-auto"><OrderItemsTable items={order.items} /></section>
+        <div className="space-y-4">
+          <TotalsBox totals={{ ...order, volume: order.totalVolumeM3 }} />
+          <div className="card p-5 text-sm">
+            <div className="label">Deliver to</div>
+            <b>{order.deliveryName}</b><br />{order.deliveryAddress}<br />{order.deliveryPostal} {order.deliveryCity}, {countryName(order.deliveryCountry)}<br />{order.deliveryPhone}
+            {order.notes && <p className="mt-2 rounded bg-slate-50 p-2 text-xs">{order.notes}</p>}
+            <div className="label mt-4">Billing VAT</div>{order.company.vatNumber ?? "—"} ({countryName(order.company.country)})
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

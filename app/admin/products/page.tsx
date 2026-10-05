@@ -1,57 +1,50 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import { formatTRY, formatPercent } from "@/lib/money";
+import ProductImage from "@/components/ProductImage";
+import { toggleProduct } from "@/app/actions/admin";
+import { db } from "@/lib/db";
+import { money, parseJson } from "@/lib/format";
 
-export default async function AdminProductsPage() {
-  const products = await prisma.product.findMany({ orderBy: { createdAt: "desc" } });
+export const metadata = { title: "Products" };
+
+export default async function AdminProducts({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const { q } = await searchParams;
+  const products = await db.product.findMany({
+    where: q ? { OR: [{ name: { contains: q } }, { sku: { contains: q } }, { supplierName: { contains: q } }] } : {},
+    include: { category: true },
+    orderBy: [{ category: { sortOrder: "asc" } }, { name: "asc" }],
+  });
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Ürünler</h1>
-        <Link
-          href="/admin/products/new"
-          className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm hover:bg-slate-800"
-        >
-          + Yeni Ürün
-        </Link>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="h1">Products ({products.length})</h1>
+        <div className="flex gap-2">
+          <form><input name="q" defaultValue={q} placeholder="Search…" className="input w-48" /></form>
+          <Link href="/admin/import" className="btn-outline">Import</Link>
+          <Link href="/admin/products/new" className="btn-primary">New product</Link>
+        </div>
       </div>
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-600">
-            <tr>
-              <th className="px-4 py-2">SKU</th>
-              <th className="px-4 py-2">Ürün</th>
-              <th className="px-4 py-2">Birim</th>
-              <th className="px-4 py-2 text-right">Fiyat</th>
-              <th className="px-4 py-2 text-right">KDV</th>
-              <th className="px-4 py-2 text-right">Stok</th>
-              <th className="px-4 py-2 text-right">Rez.</th>
-              <th className="px-4 py-2">Durum</th>
-              <th className="px-4 py-2"></th>
-            </tr>
-          </thead>
+      <div className="card overflow-x-auto">
+        <table className="table">
+          <thead><tr><th /><th>Product</th><th>Category</th><th className="text-right">Price</th><th className="text-right">Cost</th><th className="text-right">Margin</th><th>MOQ</th><th>Status</th><th /></tr></thead>
           <tbody>
-            {products.length === 0 ? (
-              <tr><td className="px-4 py-4 text-slate-500" colSpan={9}>Henüz ürün yok.</td></tr>
-            ) : products.map((p) => (
-              <tr key={p.id} className="border-t border-slate-100">
-                <td className="px-4 py-2 font-mono text-xs">{p.sku}</td>
-                <td className="px-4 py-2">{p.name}</td>
-                <td className="px-4 py-2">{p.unit}</td>
-                <td className="px-4 py-2 text-right">{formatTRY(p.price as any)}</td>
-                <td className="px-4 py-2 text-right">{formatPercent(p.vatRate as any)}</td>
-                <td className="px-4 py-2 text-right">{p.stockQuantity}</td>
-                <td className="px-4 py-2 text-right">{p.reservedQuantity}</td>
-                <td className="px-4 py-2">
-                  <span className={`text-xs px-2 py-0.5 rounded ${p.isActive ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600"}`}>
-                    {p.isActive ? "Aktif" : "Pasif"}
-                  </span>
-                </td>
-                <td className="px-4 py-2 text-right">
-                  <Link href={`/admin/products/${p.id}`} className="text-slate-700 hover:underline text-xs">Düzenle</Link>
-                </td>
-              </tr>
-            ))}
+            {products.map((p) => {
+              const margin = p.supplierPrice > 0 ? ((p.price - p.supplierPrice) / p.price) * 100 : null;
+              return (
+                <tr key={p.id} className={p.active ? "" : "opacity-50"}>
+                  <td><div className="h-10 w-14 overflow-hidden rounded"><ProductImage src={parseJson<string[]>(p.images, [])[0]} name="" category={p.category.slug} /></div></td>
+                  <td><Link href={`/admin/products/${p.id}`} className="font-semibold hover:text-brand-600">{p.name}</Link><div className="font-mono text-xs text-slate-500">{p.sku}{p.supplierName && ` · ${p.supplierName}`}</div></td>
+                  <td>{p.category.name}</td>
+                  <td className="text-right font-semibold">{money(p.price)}</td>
+                  <td className="text-right text-slate-500">{p.supplierPrice ? money(p.supplierPrice) : "—"}</td>
+                  <td className="text-right">{margin === null ? "—" : `${margin.toFixed(0)}%`}</td>
+                  <td>{p.moq} {p.unit}</td>
+                  <td>{p.active ? <span className="badge bg-emerald-100 text-emerald-800">Active</span> : <span className="badge bg-slate-100 text-slate-600">Hidden</span>}</td>
+                  <td className="whitespace-nowrap text-right">
+                    <form action={toggleProduct} className="inline"><input type="hidden" name="id" value={p.id} /><button className="text-xs text-slate-500 hover:text-slate-900">{p.active ? "Hide" : "Show"}</button></form>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

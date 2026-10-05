@@ -2,17 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: 248 250 252;
-  --foreground: 17 24 39;
+@layer base {
+  body { @apply bg-slate-50 text-slate-900 antialiased; }
 }
 
-html, body {
-  background-color: rgb(var(--background));
-  color: rgb(var(--foreground));
-}
-
-@media print {
-  .no-print { display: none !important; }
-  body { background: white; }
+@layer components {
+  .container-page { @apply mx-auto w-full max-w-7xl px-4 sm:px-6; }
+  .card { @apply rounded-xl border border-slate-200 bg-white shadow-sm; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply btn bg-brand-600 text-white hover:bg-brand-700; }
+  .btn-accent { @apply btn bg-accent-500 text-white hover:bg-accent-600; }
+  .btn-outline { @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50; }
+  .btn-danger { @apply btn border border-red-200 bg-white text-red-600 hover:bg-red-50; }
+  .input { @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100; }
+  .label { @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500; }
+  .badge { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold; }
+  .table { @apply w-full text-left text-sm; }
+  .table th { @apply border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500; }
+  .table td { @apply border-b border-slate-100 px-3 py-2.5 align-middle; }
+  .h1 { @apply text-2xl font-bold tracking-tight text-slate-900; }
+  .muted { @apply text-sm text-slate-500; }
 }
