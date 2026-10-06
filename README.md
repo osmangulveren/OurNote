@@ -2,20 +2,27 @@
 
 Wholesale ordering platform for European retailers. You sell products sourced from manufacturers in Türkiye under **your own brand**, invoiced by **your Romanian company**. Trucks (TIR) deliver straight from the workshop to each store, with no warehouse in between, and you handle transport and customs.
 
-## What store owners can do
-- Browse the catalog by category. Prices are only shown to approved trade accounts.
-- Apply for a trade account with company and VAT details. You approve each one.
-- Order in wholesale quantities, with a minimum order quantity (MOQ) and volume price tiers. The cart shows how much truck space the order takes.
-- Pay online by card or SEPA through Stripe, or by bank transfer with a proforma invoice.
-- Track every order: *placed → paid → in production → loading → on the road → customs → out for delivery → delivered*. The order page shows a live truck card with plate, route, ETA, driver and location updates.
-- Print invoices or proformas, and reorder in one click.
+## Built around how furniture stores actually import
+| Typical pain | What the app does |
+|---|---|
+| Freight and customs surprises | Prices are **delivered**: production, packing, road freight and EU clearance (A.TR, no duty) are included. One EU invoice from the Romanian company. |
+| Can't fill a full truck | **Shared trucks (groupage):** stores book space on scheduled departures and only pay for their m³. Each truck shows a booking deadline, free space and how many stores are on it. |
+| Cash locked up for months | **30% deposit** starts production; the balance is due before loading (or pay in full). |
+| No idea where the goods are | **Live tracking:** a tilted, animated route map from Istanbul to the store, the truck plate, ETA and every update you post. |
+| Buying fabric blind | **3D fabric viewer** (velvet / bouclé / linen-look) and a free **swatch kit** request. |
+| "Will it sell, what's my margin?" | **Margin calculator** on every product (editable retail price and VAT), plus trend filters (sofa bed, curved, bouclé, storage…). |
+| Damage disputes | **Claims** per piece straight from the delivered order; admin resolves them on one screen. |
 
-## What you (admin) can do
-- **Products**: create and edit products and categories, set price tiers, MOQ, packed volume and weight, specs and colours. Internal sourcing fields (manufacturer, purchase price, source URL) and margin are visible **only to you**.
-- **Import**: upload a catalog JSON. Products are matched by SKU and updated, never deleted.
-- **Customers**: approve or reject trade applications.
-- **Orders**: change status, mark bank transfers as paid, see the margin per order.
-- **Trucks (TIR)**: plan a truck, put paid orders on it (with a load % of the trailer) and post tracking updates (*Departed Istanbul*, *At Kapıkule*, …). Every store on the truck sees the update, and their orders move to the matching status automatically. Mark each store's order as delivered when the truck unloads.
+## Experience
+- **3D everywhere:** every product is modelled procedurally from its dimensions (sofas, sofa beds that animate open, corner and curved modular sofas, armchairs, beds, poufs and benches), with fabric that morphs when you switch swatches and a dimension overlay. Catalog cards share a single WebGL canvas, so a whole grid of 3D models stays fast.
+- **3D load planner:** the cart and checkout show your pieces packed into a 13.6 m trailer next to the other stores' load on the truck you pick.
+- **Motion:** smooth scrolling, staggered reveals, headlines that rise word by word, a live booking countdown and an animated route.
+- **Design:** warm bone/ink/terracotta palette, Instrument Serif + Instrument Sans + JetBrains Mono, hairlines and dimension-line details borrowed from technical drawings. Printable **product sheets** with an auto-generated technical drawing for the shop floor.
+
+## Admin
+- Products, categories, catalog import (JSON / Alibaba scraper). Manufacturer, purchase price, source URL and margin are visible **only to you**.
+- Trade account approvals, orders (record deposit / balance), claims, swatch kits.
+- **Trucks:** plan a truck, open it for booking (deadline, planned departure, usable m³), add orders and post tracking updates. Every store on the truck sees the update and their orders move to the matching status.
 
 ## VAT logic (Romanian seller)
 | Buyer | VAT |
@@ -32,7 +39,7 @@ Check VAT IDs in VIES before approving accounts. Confirm the final invoicing set
 npm install
 cp .env.example .env        # set brand, company, IBAN, Stripe keys
 npx prisma db push          # create the SQLite database
-npm run db:seed             # admin user, catalog from data/catalog.json, demo buyer + truck
+npm run db:seed             # admin, catalog from data/catalog.json, demo stores, trucks and orders
 npm run dev                 # http://localhost:3000
 ```
 Logins after seeding:
@@ -63,6 +70,6 @@ Set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, then point a webhook at `/a
 - `npm run build && npm start` (or deploy to Vercel or any Node host).
 
 ## Tech
-Next.js 15 (App Router, server actions) · TypeScript · Tailwind CSS · Prisma · Stripe Checkout · JWT cookie sessions.
+Next.js 15 (App Router, server actions) · TypeScript · Tailwind CSS · Three.js / React Three Fiber / drei · Motion · Lenis · Prisma · Stripe Checkout · JWT cookie sessions.
 
-`node scripts/smoke-test.mjs` runs an end-to-end browser test of the main flows (app must be running on :3000).
+`node scripts/smoke-test.mjs` runs an end-to-end browser test: browse, order on a shared truck with a deposit, admin records the deposit and moves the truck, buyer tracks it (app must be running on :3000).

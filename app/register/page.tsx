@@ -1,20 +1,27 @@
+import AuthShell from "@/components/AuthShell";
+import { SplitHeading } from "@/components/motion/Reveal";
 import { ALL_COUNTRIES } from "@/lib/config";
 import RegisterForm from "./RegisterForm";
 
 export const metadata = { title: "Open a trade account" };
 
 export default function RegisterPage() {
-  const countries = Object.entries(ALL_COUNTRIES).sort((a, b) => a[1].localeCompare(b[1]));
+  const countries = Object.entries(ALL_COUNTRIES).sort((a, b) => a[1].localeCompare(b[1])) as [string, string][];
   return (
-    <div className="container-page flex justify-center py-12">
-      <div className="card w-full max-w-2xl p-8">
-        <h1 className="h1 mb-1">Open a trade account</h1>
-        <p className="muted mb-6">
-          For retailers and businesses only. We review every application, usually within one business day.
-          Once approved you will see wholesale prices and can place orders.
-        </p>
+    <AuthShell
+      aside={
+        <ul className="space-y-3 text-lg">
+          {["Trade prices and volume tiers", "Book space on shared trucks", "Free fabric swatch kits", "Live tracking to your door"].map((x, i) => (
+            <li key={x} className="flex items-baseline gap-4"><span className="font-mono text-xs text-stone-2">0{i + 1}</span>{x}</li>
+          ))}
+        </ul>
+      }
+    >
+      <div className="mx-auto w-full max-w-xl">
+        <SplitHeading text="Open a *trade* account." className="display text-6xl" />
+        <p className="mb-8 mt-3 text-ink-3">For furniture stores and interior businesses. We check your VAT number and usually approve within one business day.</p>
         <RegisterForm countries={countries} />
       </div>
-    </div>
+    </AuthShell>
   );
 }

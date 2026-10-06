@@ -1,81 +1,93 @@
-// End-to-end smoke test of the main flows. Run with the app on :3000: node scripts/smoke-test.mjs [screenshotDir]
+// End-to-end smoke test of the main flows.
+// Run with the app on :3000 (or BASE_URL): node scripts/smoke-test.mjs [screenshotDir]
 import { chromium } from "playwright";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const shots = process.argv[2];
 const exe = process.env.CHROMIUM_PATH;
-const browser = await chromium.launch(exe ? { executablePath: exe } : {});
-const shot = async (page, name) => shots && page.screenshot({ path: `${shots}/${name}.png`, fullPage: true });
-const ok = (cond, msg) => { if (!cond) throw new Error(`FAIL: ${msg}`); console.log(`✓ ${msg}`); };
+const browser = await chromium.launch({
+  ...(exe ? { executablePath: exe } : {}),
+  args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
+});
+const errors = [];
+const shot = async (page, name) => shots && page.screenshot({ path: `${shots}/${name}.png` });
+const ok = (cond, msg) => {
+  if (!cond) throw new Error(`FAIL: ${msg}`);
+  console.log(`✓ ${msg}`);
+};
+
+async function newPage() {
+  const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+  page.on("pageerror", (e) => errors.push(e.message));
+  return page;
+}
 
 async function login(email, password) {
-  const ctx = await browser.newContext({ viewport: { width: 1360, height: 900 } });
-  const page = await ctx.newPage();
+  const page = await newPage();
   await page.goto(`${BASE}/login`);
   await page.fill("#email", email);
   await page.fill("#password", password);
-  await Promise.all([page.waitForURL((u) => !u.pathname.startsWith("/login")), page.click("button:has-text('Log in')")]);
+  await Promise.all([page.waitForURL((u) => !u.pathname.startsWith("/login")), page.click("form button:has-text('Log in')")]);
   return page;
 }
 
 // Guest: catalog visible, prices hidden
-const guest = await (await browser.newContext({ viewport: { width: 1360, height: 900 } })).newPage();
-await guest.goto(BASE);
-await shot(guest, "01-home");
-await guest.goto(`${BASE}/catalog`);
-ok((await guest.content()).includes("Log in for price"), "guest sees catalog without prices");
+const guest = await newPage();
+await guest.goto(`${BASE}/catalog`, { waitUntil: "networkidle" });
+ok((await guest.content()).includes("Trade price"), "guest sees the collection without prices");
 
-// Buyer: order with bank transfer
+// Buyer: add to load, check out on a shared truck with a deposit
 const buyer = await login("buyer@example.com", "buyer12345");
-await buyer.goto(`${BASE}/catalog?category=sofa-beds`);
-await shot(buyer, "02-catalog");
-await buyer.click("text=Milano 3-Seater Sofa Bed with Storage");
-await buyer.waitForURL(/\/products\//);
-await shot(buyer, "03-product");
+await buyer.goto(`${BASE}/products/milano-sofa-bed-sb-190`, { waitUntil: "networkidle" });
 await buyer.fill("input[name=quantity]", "12");
-await Promise.all([buyer.waitForURL(/\/cart/), buyer.click("button:has-text('Add & checkout')")]);
-await shot(buyer, "04-cart");
-ok((await buyer.content()).includes("€4,428.00"), "tier price applied (12 × €369)");
-await buyer.click("text=Proceed to checkout");
-await buyer.waitForURL(/\/checkout/);
-await Promise.all([buyer.waitForURL(/\/orders\/.+placed=1/), buyer.click("button:has-text('Place order')")]);
-await shot(buyer, "05-order-placed");
+await buyer.click("button:has-text('Add & review load')");
+await buyer.waitForURL(/\/cart/, { waitUntil: "commit" });
+await buyer.waitForSelector("text=Your");
+await shot(buyer, "cart");
+ok((await buyer.content()).includes("€4,428.00"), "volume tier applied (12 × €369)");
+await buyer.goto(`${BASE}/checkout`, { waitUntil: "networkidle" });
+await buyer.click("button:has-text('Place order')");
+await buyer.waitForURL(/\/orders\/.+placed=1/, { timeout: 30000 });
+await shot(buyer, "order-placed");
 const orderUrl = buyer.url().split("?")[0];
-const orderNo = await buyer.locator("h1").innerText();
-ok(orderNo.includes("ORD-"), `order placed: ${orderNo.split("\n")[0]}`);
-ok((await buyer.content()).includes("reverse charge"), "DE buyer with VAT ID gets reverse charge");
+const html = await buyer.content();
+ok(html.includes("deposit to start production"), "deposit requested before production");
+ok(html.includes("reverse charge"), "DE buyer with VAT ID is reverse-charged");
+ok(html.includes("TIR-2026-002"), "order booked on the chosen shared truck");
 
-// Admin: mark paid, create truck, add order, post update
+// Admin: record the deposit and move the truck
 const admin = await login("admin@example.com", "admin12345");
-await shot(admin, "06-admin-dashboard");
 await admin.goto(`${BASE}/admin/orders`);
 await admin.locator("a.font-mono").first().click();
-await admin.click("button:has-text('Mark as paid')");
-await admin.waitForSelector("text=PAID");
-await admin.goto(`${BASE}/admin/shipments/new`);
-await admin.fill("input[name=truckPlate]", "34 XYZ 789");
-await admin.fill("input[name=route]", "Istanbul → Kapıkule → Sofia → Bucharest → Munich");
-await Promise.all([admin.waitForURL(/\/admin\/shipments\/(?!new)/), admin.click("button:has-text('Create truck')")]);
-await admin.click("button:has-text('Add to truck')");
-await admin.waitForSelector("text=Orders on this truck (1)");
-await admin.selectOption("select[name=stage]", "DEPARTED");
-await admin.fill("input[name=location]", "Istanbul, TR");
-await admin.click("button:has-text('Post update')");
-await admin.waitForSelector("text=Istanbul, TR");
-await admin.selectOption("select[name=stage]", "AT_BORDER");
-await admin.fill("input[name=location]", "Kapıkule border");
-await admin.click("button:has-text('Post update')");
-await admin.waitForSelector("text=Kapıkule border");
-await shot(admin, "07-admin-truck");
+await admin.waitForURL(/\/admin\/orders\/.+/);
+await admin.click("button:has-text('Deposit received')");
+await admin.waitForSelector("text=Deposit paid");
+ok(true, "admin records the deposit");
+await admin.click("a:has-text('TIR-2026-002')");
+await admin.waitForURL(/\/admin\/shipments\/.+/);
+for (const [stage, location] of [["LOADING", "Inegöl workshop"], ["DEPARTED", "Hadımköy gate"], ["AT_BORDER", "Kapıkule border"]]) {
+  await admin.selectOption("select[name=stage]", stage);
+  await admin.fill("input[name=location]", location);
+  await admin.click("button:has-text('Post update')");
+  await admin.waitForSelector(`li:has-text("${location}")`);
+  await admin.waitForLoadState("networkidle");
+}
+await shot(admin, "admin-truck");
+ok(true, "admin posts truck updates");
 
-// Buyer sees tracking
-await buyer.goto(orderUrl);
-await shot(buyer, "08-buyer-tracking");
-const html = await buyer.content();
-ok(html.includes("34 XYZ 789") && html.includes("Kapıkule border"), "buyer sees truck and latest location");
+// Buyer follows the truck
+await buyer.goto(orderUrl, { waitUntil: "networkidle" });
+await buyer.waitForTimeout(2500);
+await shot(buyer, "tracking");
+const tracking = await buyer.content();
+ok(tracking.includes("16 KLM 482") && tracking.includes("Kapıkule border"), "buyer sees the truck plate and latest location");
+ok(tracking.includes("Balance"), "balance shown as due before loading");
 await buyer.goto(`${orderUrl}/invoice`);
-await shot(buyer, "09-invoice");
-ok((await buyer.content()).includes("INVOICE"), "invoice renders");
+ok((await buyer.content()).includes("PROFORMA"), "proforma invoice renders");
 
 await browser.close();
+if (errors.length) {
+  console.error("Page errors:\n" + errors.join("\n"));
+  process.exit(1);
+}
 console.log("All smoke checks passed");

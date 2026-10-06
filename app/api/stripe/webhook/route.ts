@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { markOrderPaid } from "@/lib/orders";
+import { recordPayment } from "@/lib/orders";
 import { stripe } from "@/lib/stripe";
 
 export async function POST(req: Request) {
@@ -15,7 +15,8 @@ export async function POST(req: Request) {
   if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
     const session = event.data.object;
     const orderId = session.metadata?.orderId;
-    if (orderId && session.payment_status === "paid") await markOrderPaid(orderId, "Card payment received (Stripe)");
+    const kind = session.metadata?.kind === "DEPOSIT" ? "DEPOSIT" : "BALANCE";
+    if (orderId && session.payment_status === "paid") await recordPayment(orderId, kind, "card");
   }
   return NextResponse.json({ received: true });
 }

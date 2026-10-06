@@ -6,7 +6,7 @@ import { z } from "zod";
 import { requireBuyer } from "@/lib/auth";
 import { ALL_COUNTRIES, config } from "@/lib/config";
 import { db } from "@/lib/db";
-import { nextOrderNumber } from "@/lib/orders";
+import { amountDue, bookableDepartures, nextOrderNumber, readyDate } from "@/lib/orders";
 import { computeTotals, unitPrice } from "@/lib/pricing";
 import { stripe } from "@/lib/stripe";
 
@@ -21,7 +21,34 @@ const CheckoutSchema = z.object({
   deliveryPhone: z.string().trim().min(5),
   notes: z.string().trim().max(2000).default(""),
   paymentMethod: z.enum(["STRIPE", "BANK_TRANSFER"]),
+  paymentPlan: z.enum(["FULL", "DEPOSIT"]),
+  departureId: z.string().default(""),
 });
+
+async function stripeCheckout(order: { id: string; number: string }, amount: number, kind: "DEPOSIT" | "BALANCE", email: string) {
+  const s = stripe()!;
+  const label = kind === "DEPOSIT" ? `${config.depositPercent}% deposit` : "payment";
+  const session = await s.checkout.sessions.create({
+    mode: "payment",
+    customer_email: email,
+    client_reference_id: order.id,
+    metadata: { orderId: order.id, kind },
+    line_items: [
+      {
+        quantity: 1,
+        price_data: {
+          currency: "eur",
+          unit_amount: Math.round(amount * 100),
+          product_data: { name: `${config.brandName} order ${order.number} – ${label}` },
+        },
+      },
+    ],
+    success_url: `${config.appUrl}/orders/${order.id}?paid=1`,
+    cancel_url: `${config.appUrl}/orders/${order.id}`,
+  });
+  await db.order.update({ where: { id: order.id }, data: { stripeSessionId: session.id } });
+  return session.url!;
+}
 
 export async function placeOrder(_: CheckoutState, form: FormData): Promise<CheckoutState> {
   const user = await requireBuyer();
@@ -35,19 +62,31 @@ export async function placeOrder(_: CheckoutState, form: FormData): Promise<Chec
   const inactive = cart.find((c) => !c.product.active);
   if (inactive) return { error: `${inactive.product.name} is no longer available. Please remove it.` };
 
-  const lines = cart.map((c) => {
-    const price = unitPrice(c.product, c.quantity);
-    return { c, unitPrice: price, quantity: c.quantity, volumeM3: c.product.volumeM3 };
-  });
+  const lines = cart.map((c) => ({ c, unitPrice: unitPrice(c.product, c.quantity), quantity: c.quantity, volumeM3: c.product.volumeM3 }));
   // VAT treatment follows the buyer company's registration, not the delivery address.
   const totals = computeTotals({ lines, country: user.company.country, vatNumber: user.company.vatNumber });
 
+  let shipmentId: string | null = null;
+  if (d.departureId) {
+    const dep = (await bookableDepartures()).find((x) => x.id === d.departureId);
+    if (!dep) return { error: "That truck is no longer open for booking. Please choose another." };
+    if (dep.free < totals.volume) return { error: `Only ${dep.free} m³ left on ${dep.code}. Choose a later truck or reduce the order.` };
+    const lead = Math.max(...cart.map((c) => c.product.leadTimeDays));
+    if (dep.plannedDepartureAt && dep.plannedDepartureAt < readyDate(lead)) {
+      return { error: `${dep.code} leaves before production (${lead} days) can be finished. Choose a later truck.` };
+    }
+    shipmentId = dep.id;
+  }
+
+  const depositAmount = d.paymentPlan === "DEPOSIT" ? Math.round(totals.total * config.depositPercent) / 100 : 0;
   const order = await db.order.create({
     data: {
       number: await nextOrderNumber(),
       companyId: user.company.id,
       userId: user.id,
       paymentMethod: d.paymentMethod,
+      paymentPlan: d.paymentPlan,
+      depositAmount,
       subtotal: totals.subtotal,
       freight: totals.freight,
       vatRate: totals.vatRate,
@@ -55,6 +94,7 @@ export async function placeOrder(_: CheckoutState, form: FormData): Promise<Chec
       vatNote: totals.vatNote,
       total: totals.total,
       totalVolumeM3: totals.volume,
+      shipmentId,
       deliveryName: d.deliveryName,
       deliveryAddress: d.deliveryAddress,
       deliveryCity: d.deliveryCity,
@@ -81,58 +121,19 @@ export async function placeOrder(_: CheckoutState, form: FormData): Promise<Chec
   revalidatePath("/", "layout");
 
   if (d.paymentMethod === "STRIPE") {
-    const s = stripe()!;
-    // One line for the full amount keeps Stripe's total identical to our invoice (VAT, freight included).
-    const session = await s.checkout.sessions.create({
-      mode: "payment",
-      customer_email: user.email,
-      client_reference_id: order.id,
-      metadata: { orderId: order.id },
-      line_items: [
-        {
-          quantity: 1,
-          price_data: {
-            currency: "eur",
-            unit_amount: Math.round(order.total * 100),
-            product_data: { name: `${config.brandName} order ${order.number}` },
-          },
-        },
-      ],
-      success_url: `${config.appUrl}/orders/${order.id}?paid=1`,
-      cancel_url: `${config.appUrl}/orders/${order.id}`,
-    });
-    await db.order.update({ where: { id: order.id }, data: { stripeSessionId: session.id } });
-    redirect(session.url!);
+    redirect(await stripeCheckout(order, amountDue(order), d.paymentPlan === "DEPOSIT" ? "DEPOSIT" : "BALANCE", user.email));
   }
   redirect(`/orders/${order.id}?placed=1`);
 }
 
-/** Lets the buyer retry card payment for an unpaid order. */
+/** Card payment of whatever is due now (deposit or remaining balance). */
 export async function payOrder(form: FormData) {
   const user = await requireBuyer();
   const order = await db.order.findFirst({ where: { id: String(form.get("orderId")), companyId: user.company.id } });
-  const s = stripe();
-  if (!order || order.paymentStatus === "PAID" || order.status === "CANCELLED" || !s) return;
-  const session = await s.checkout.sessions.create({
-    mode: "payment",
-    customer_email: user.email,
-    client_reference_id: order.id,
-    metadata: { orderId: order.id },
-    line_items: [
-      {
-        quantity: 1,
-        price_data: {
-          currency: "eur",
-          unit_amount: Math.round(order.total * 100),
-          product_data: { name: `${config.brandName} order ${order.number}` },
-        },
-      },
-    ],
-    success_url: `${config.appUrl}/orders/${order.id}?paid=1`,
-    cancel_url: `${config.appUrl}/orders/${order.id}`,
-  });
-  await db.order.update({ where: { id: order.id }, data: { stripeSessionId: session.id, paymentMethod: "STRIPE" } });
-  redirect(session.url!);
+  if (!order || order.paymentStatus === "PAID" || order.status === "CANCELLED" || !stripe()) return;
+  const kind = order.paymentStatus === "UNPAID" && order.paymentPlan === "DEPOSIT" ? "DEPOSIT" : "BALANCE";
+  await db.order.update({ where: { id: order.id }, data: { paymentMethod: "STRIPE" } });
+  redirect(await stripeCheckout(order, amountDue(order), kind, user.email));
 }
 
 export async function reorder(form: FormData) {
@@ -151,4 +152,31 @@ export async function reorder(form: FormData) {
     });
   }
   redirect("/cart");
+}
+
+const ClaimSchema = z.object({
+  orderId: z.string(),
+  sku: z.string().min(1),
+  quantity: z.coerce.number().int().positive(),
+  kind: z.enum(["DAMAGED", "MISSING", "WRONG_ITEM"]),
+  description: z.string().trim().min(5).max(2000),
+});
+
+export async function createClaim(form: FormData) {
+  const user = await requireBuyer();
+  const d = ClaimSchema.parse(Object.fromEntries(form));
+  const order = await db.order.findFirst({ where: { id: d.orderId, companyId: user.company.id }, include: { items: true } });
+  if (!order || !order.items.some((i) => i.sku === d.sku)) return;
+  await db.claim.create({ data: { orderId: order.id, sku: d.sku, quantity: d.quantity, kind: d.kind, description: d.description } });
+  revalidatePath(`/orders/${order.id}`);
+}
+
+export async function requestSamples(form: FormData) {
+  const user = await requireBuyer();
+  const fabrics = form.getAll("fabric").map(String).filter(Boolean);
+  if (fabrics.length === 0) return;
+  await db.sampleRequest.create({
+    data: { companyId: user.company.id, fabrics: JSON.stringify(fabrics), note: String(form.get("note") ?? "").slice(0, 500) },
+  });
+  redirect("/fabrics?requested=1");
 }

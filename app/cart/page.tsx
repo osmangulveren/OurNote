@@ -1,12 +1,15 @@
 import Link from "next/link";
-import ProductImage from "@/components/ProductImage";
+import { Reveal, SplitHeading } from "@/components/motion/Reveal";
 import TotalsBox from "@/components/TotalsBox";
+import { TrailerStage } from "@/components/three";
 import { removeCartItem, updateCartItem } from "@/app/actions/cart";
 import { requireBuyer } from "@/lib/auth";
-import { getCart } from "@/lib/cart";
-import { money, parseJson } from "@/lib/format";
+import { getCart, planItems } from "@/lib/cart";
+import { config } from "@/lib/config";
+import { fabricOf } from "@/lib/fabrics";
+import { money } from "@/lib/format";
 
-export const metadata = { title: "Cart" };
+export const metadata = { title: "Your load" };
 
 export default async function CartPage() {
   const user = await requireBuyer();
@@ -14,46 +17,65 @@ export default async function CartPage() {
 
   if (lines.length === 0) {
     return (
-      <div className="container-page py-16 text-center">
-        <h1 className="h1 mb-2">Your cart is empty</h1>
-        <p className="muted mb-6">Browse the catalog and add products in wholesale quantities.</p>
-        <Link href="/catalog" className="btn-primary">Go to catalog</Link>
+      <div className="container-page pb-10 pt-40 text-center">
+        <SplitHeading text="Your truck is *empty.*" className="display text-6xl" />
+        <p className="muted mt-4">Add pieces from the collection — you&apos;ll see them loaded here in 3D.</p>
+        <Link href="/catalog" className="btn-primary mt-8">Browse the collection</Link>
       </div>
     );
   }
+  const fill = (totals.volume / config.truckCapacityCbm) * 100;
 
   return (
-    <div className="container-page py-8">
-      <h1 className="h1 mb-6">Cart</h1>
-      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-        <div className="card divide-y divide-slate-100">
+    <div className="pt-24 md:pt-28">
+      <div className="container-page">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <Reveal className="eyebrow mb-3">{lines.length} lines · {totals.volume.toFixed(2)} m³ · {fill.toFixed(1)}% of a 13.6 m trailer</Reveal>
+            <SplitHeading text="Your *load.*" className="display text-[clamp(3rem,7vw,6rem)]" />
+          </div>
+          <Link href="/checkout" className="btn-accent px-6 py-3">Choose a truck & check out →</Link>
+        </div>
+      </div>
+
+      <Reveal className="relative">
+        <TrailerStage items={planItems(lines)} className="h-[380px] w-full sm:h-[460px]" />
+        <div className="container-page pointer-events-none absolute inset-x-0 bottom-4 flex justify-between font-mono text-[10px] uppercase tracking-wider text-stone">
+          <span>Drag to orbit · scroll to zoom</span>
+          <span>Front of trailer ← cab</span>
+        </div>
+      </Reveal>
+
+      <div className="container-page mt-10 grid gap-8 lg:grid-cols-[1fr_380px]">
+        <div className="border-t border-line">
           {lines.map(({ item, unitPrice, lineTotal }) => (
-            <div key={item.id} className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
-              <div className="h-20 w-28 shrink-0 overflow-hidden rounded-lg">
-                <ProductImage src={parseJson<string[]>(item.product.images, [])[0]} name={item.product.name} category={item.product.category.slug} />
-              </div>
-              <div className="flex-1">
-                <Link href={`/products/${item.product.slug}`} className="font-semibold hover:text-brand-600">{item.product.name}</Link>
-                <div className="text-xs text-slate-500">
-                  {item.product.sku}{item.color && ` · ${item.color}`} · {money(unitPrice)} / {item.product.unit} · MOQ {item.product.moq}
+            <div key={item.id} className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 border-b border-line py-5 sm:grid-cols-[auto_1fr_auto_auto_auto] sm:items-center">
+              <span className="h-12 w-12 rounded-full ring-1 ring-line" style={{ background: fabricOf(item.color || "Sand Velvet").hex }} title={item.color} />
+              <div className="min-w-0">
+                <Link href={`/products/${item.product.slug}`} className="font-display text-2xl leading-none hover:text-clay">{item.product.name}</Link>
+                <div className="mt-1 font-mono text-[11px] uppercase tracking-wider text-stone">
+                  {item.product.sku}{item.color && ` · ${item.color}`} · {(item.product.volumeM3 * item.quantity).toFixed(2)} m³
                 </div>
               </div>
-              <form action={updateCartItem} className="flex items-center gap-2">
+              <form action={updateCartItem} className="col-span-2 flex items-center gap-2 sm:col-span-1">
                 <input type="hidden" name="id" value={item.id} />
-                <input name="quantity" type="number" min={item.product.moq} defaultValue={item.quantity} className="input w-20 text-center" />
-                <button className="btn-outline px-3 py-1.5 text-xs">Update</button>
+                <input name="quantity" type="number" min={item.product.moq} defaultValue={item.quantity} className="input num w-20 rounded-full text-center" />
+                <button className="btn-ghost text-xs">Update</button>
               </form>
-              <div className="w-28 text-right font-semibold">{money(lineTotal)}</div>
-              <form action={removeCartItem}>
+              <div className="text-right sm:w-32">
+                <div className="num">{money(lineTotal)}</div>
+                <div className="font-mono text-[10px] text-stone">{money(unitPrice)} / {item.product.unit}</div>
+              </div>
+              <form action={removeCartItem} className="text-right">
                 <input type="hidden" name="id" value={item.id} />
-                <button className="text-xs text-slate-400 hover:text-red-600" aria-label="Remove">✕</button>
+                <button className="grid h-8 w-8 place-items-center rounded-full text-stone hover:bg-clay-3 hover:text-clay-2" aria-label="Remove">✕</button>
               </form>
             </div>
           ))}
         </div>
-        <div>
+        <div className="lg:sticky lg:top-24 lg:self-start">
           <TotalsBox totals={totals}>
-            <Link href="/checkout" className="btn-accent mt-2 w-full">Proceed to checkout</Link>
+            <Link href="/checkout" className="btn-accent mt-2 w-full py-3">Choose a truck →</Link>
           </TotalsBox>
         </div>
       </div>

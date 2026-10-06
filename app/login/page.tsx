@@ -1,4 +1,6 @@
 import Link from "next/link";
+import AuthShell from "@/components/AuthShell";
+import { SplitHeading } from "@/components/motion/Reveal";
 import LoginForm from "./LoginForm";
 
 export const metadata = { title: "Log in" };
@@ -6,15 +8,13 @@ export const metadata = { title: "Log in" };
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next } = await searchParams;
   return (
-    <div className="container-page flex justify-center py-16">
-      <div className="card w-full max-w-md p-8">
-        <h1 className="h1 mb-1">Log in</h1>
-        <p className="muted mb-6">Access wholesale prices, orders and truck tracking.</p>
+    <AuthShell aside={<><div className="font-display text-4xl leading-tight">Your loads, your trucks and your invoices — in one place.</div><div className="mt-3 font-mono text-[11px] uppercase tracking-wider text-stone-2">Terracotta Velvet</div></>}>
+      <div className="mx-auto w-full max-w-md">
+        <SplitHeading text="Welcome *back.*" className="display text-6xl" />
+        <p className="mb-8 mt-3 text-ink-3">Trade prices, your loads and every truck you&apos;re on.</p>
         <LoginForm next={next} />
-        <p className="muted mt-6 text-center">
-          No account yet? <Link href="/register" className="font-semibold text-brand-600">Open a trade account</Link>
-        </p>
+        <p className="mt-8 text-sm text-ink-3">New here? <Link href="/register" className="link-underline text-ink">Open a trade account</Link></p>
       </div>
-    </div>
+    </AuthShell>
   );
 }

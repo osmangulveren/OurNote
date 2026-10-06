@@ -14,7 +14,7 @@ export default function InvoiceView({ order }: { order: Order }) {
   const paid = order.paymentStatus === "PAID";
   const c = order.company;
   return (
-    <div className="mx-auto max-w-3xl bg-white p-10 print:p-0">
+    <div className="mx-auto max-w-3xl bg-paper p-10 pt-28 print:p-0">
       <div className="mb-8 flex items-start justify-between">
         <div>
           <div className="text-2xl font-bold text-brand-700">{config.brandName}</div>

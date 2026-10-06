@@ -34,6 +34,7 @@ model Company {
   status     String   @default("PENDING") // PENDING | APPROVED | REJECTED
   users      User[]
   orders     Order[]
+  samples    SampleRequest[]
   createdAt  DateTime @default(now())
 }
 
@@ -70,6 +71,9 @@ model Product {
   specs            String      @default("[]") // JSON {label, value}[]
   active           Boolean     @default(true)
   featured         Boolean     @default(false)
+  rrp              Float       @default(0) // suggested retail price incl. VAT, for the buyer's margin calculator
+  tags             String      @default("[]") // JSON string[] e.g. ["Sofa bed","Storage","Curved"]
+  shape            String      @default("{}") // JSON 3D model parameters (see lib/shape.ts)
   // Internal only — never shown to buyers (you sell under your own brand)
   supplierName     String      @default("")
   supplierPrice    Float       @default(0)
@@ -101,7 +105,10 @@ model Order {
   user            User         @relation(fields: [userId], references: [id])
   status          String       @default("PENDING_PAYMENT")
   paymentMethod   String // STRIPE | BANK_TRANSFER
-  paymentStatus   String       @default("UNPAID") // UNPAID | PAID | REFUNDED
+  paymentStatus   String       @default("UNPAID") // UNPAID | DEPOSIT_PAID | PAID | REFUNDED
+  paymentPlan     String       @default("FULL") // FULL | DEPOSIT
+  depositAmount   Float        @default(0)
+  paidAmount      Float        @default(0)
   stripeSessionId String?
   subtotal        Float
   freight         Float
@@ -122,6 +129,7 @@ model Order {
   shipment        Shipment?    @relation(fields: [shipmentId], references: [id])
   items           OrderItem[]
   events          OrderEvent[]
+  claims          Claim[]
   paidAt          DateTime?
   deliveredAt     DateTime?
   createdAt       DateTime     @default(now())
@@ -163,6 +171,11 @@ model Shipment {
   origin       String          @default("Türkiye")
   route        String          @default("") // e.g. "Istanbul → Kapıkule → Sofia → Bucharest"
   stage        String          @default("PLANNED")
+  // Groupage: open trucks that stores can book space on at checkout
+  bookable     Boolean         @default(false)
+  cutoffAt     DateTime? // last day to book + pay deposit
+  plannedDepartureAt DateTime?
+  capacityM3   Float           @default(82) // usable m³
   departedAt   DateTime?
   eta          DateTime?
   orders       Order[]
@@ -178,4 +191,29 @@ model ShipmentEvent {
   location   String
   note       String   @default("")
   createdAt  DateTime @default(now())
+}
+
+// Physical fabric swatch kit requested by a store
+model SampleRequest {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  fabrics   String // JSON string[]
+  note      String   @default("")
+  status    String   @default("REQUESTED") // REQUESTED | SENT
+  createdAt DateTime @default(now())
+}
+
+// Damage / missing item report after delivery
+model Claim {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sku         String
+  quantity    Int
+  kind        String // DAMAGED | MISSING | WRONG_ITEM
+  description String
+  status      String   @default("OPEN") // OPEN | RESOLVED
+  resolution  String   @default("")
+  createdAt   DateTime @default(now())
 }

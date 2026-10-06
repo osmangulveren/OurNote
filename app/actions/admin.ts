@@ -4,9 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { importCatalog } from "@/lib/catalog-import";
+import { config } from "@/lib/config";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/format";
-import { markOrderPaid, nextShipmentCode, setOrderStatus } from "@/lib/orders";
+import { nextShipmentCode, recordPayment, setOrderStatus } from "@/lib/orders";
 import { ORDER_STATUSES, SHIPMENT_STAGES } from "@/lib/status";
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
@@ -124,9 +125,22 @@ export async function updateOrderStatus(form: FormData) {
   revalidatePath("/admin", "layout");
 }
 
-export async function adminMarkPaid(form: FormData) {
+export async function adminRecordPayment(form: FormData) {
   await requireAdmin();
-  await markOrderPaid(str(form, "id"), "Payment confirmed by admin");
+  await recordPayment(str(form, "id"), str(form, "kind") === "DEPOSIT" ? "DEPOSIT" : "BALANCE", "bank transfer");
+  revalidatePath("/admin", "layout");
+}
+
+// ---------- Samples & claims
+export async function markSampleSent(form: FormData) {
+  await requireAdmin();
+  await db.sampleRequest.update({ where: { id: str(form, "id") }, data: { status: "SENT" } });
+  revalidatePath("/admin", "layout");
+}
+
+export async function resolveClaim(form: FormData) {
+  await requireAdmin();
+  await db.claim.update({ where: { id: str(form, "id") }, data: { status: "RESOLVED", resolution: str(form, "resolution") } });
   revalidatePath("/admin", "layout");
 }
 
@@ -143,6 +157,7 @@ export async function createShipment(form: FormData) {
       carrier: str(form, "carrier"),
       route: str(form, "route"),
       eta: str(form, "eta") ? new Date(str(form, "eta")) : null,
+      ...groupage(form),
     },
   });
   redirect(`/admin/shipments/${s.id}`);
@@ -160,10 +175,18 @@ export async function updateShipment(form: FormData) {
       carrier: str(form, "carrier"),
       route: str(form, "route"),
       eta: str(form, "eta") ? new Date(str(form, "eta")) : null,
+      ...groupage(form),
     },
   });
   revalidatePath("/admin", "layout");
 }
+
+const groupage = (form: FormData) => ({
+  bookable: form.get("bookable") === "on",
+  cutoffAt: str(form, "cutoffAt") ? new Date(str(form, "cutoffAt")) : null,
+  plannedDepartureAt: str(form, "plannedDepartureAt") ? new Date(str(form, "plannedDepartureAt")) : null,
+  capacityM3: num(form, "capacityM3") || config.truckCapacityCbm,
+});
 
 export async function assignOrderToShipment(form: FormData) {
   await requireAdmin();
@@ -195,6 +218,7 @@ export async function addShipmentEvent(form: FormData) {
     where: { id },
     data: {
       stage: stage.key,
+      ...(stage.key !== "PLANNED" ? { bookable: false } : {}),
       ...(stage.key === "DEPARTED" ? { departedAt: new Date() } : {}),
       ...(str(form, "eta") ? { eta: new Date(str(form, "eta")) } : {}),
       events: { create: { stage: stage.key, location, note } },
@@ -203,7 +227,8 @@ export async function addShipmentEvent(form: FormData) {
   });
   if (stage.orderStatus) {
     for (const o of shipment.orders) {
-      if (o.status === "DELIVERED" || o.status === "CANCELLED") continue;
+      // Unpaid bookings don't move with the truck.
+      if (["DELIVERED", "CANCELLED", "PENDING_PAYMENT"].includes(o.status)) continue;
       await setOrderStatus(o.id, stage.orderStatus, [location, note].filter(Boolean).join(" — "));
     }
   }

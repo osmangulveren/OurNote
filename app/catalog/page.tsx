@@ -1,15 +1,18 @@
 import Link from "next/link";
-import ProductImage from "@/components/ProductImage";
+import { Reveal, RevealGroup, RevealItem, SplitHeading } from "@/components/motion/Reveal";
+import ProductCard from "@/components/ProductCard";
+import { ViewsCanvas } from "@/components/three";
 import { canSeePrices, currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { money, parseJson } from "@/lib/format";
+import { parseJson } from "@/lib/format";
+import { toCard } from "@/lib/views";
 
-export const metadata = { title: "Catalog" };
+export const metadata = { title: "Collection" };
 
 export default async function CatalogPage({
   searchParams,
-}: { searchParams: Promise<{ category?: string; q?: string; sort?: string }> }) {
-  const { category, q, sort } = await searchParams;
+}: { searchParams: Promise<{ category?: string; tag?: string; q?: string; sort?: string }> }) {
+  const { category, tag, q, sort } = await searchParams;
   const user = await currentUser();
   const showPrices = canSeePrices(user);
 
@@ -18,7 +21,7 @@ export default async function CatalogPage({
     include: { _count: { select: { products: { where: { active: true } } } } },
   });
   const active = categories.find((c) => c.slug === category);
-  const products = await db.product.findMany({
+  const all = await db.product.findMany({
     where: {
       active: true,
       ...(active ? { categoryId: active.id } : {}),
@@ -26,96 +29,90 @@ export default async function CatalogPage({
     },
     include: { category: true },
     orderBy:
-      sort === "price-asc" ? { price: "asc" } : sort === "price-desc" ? { price: "desc" } : [{ featured: "desc" }, { name: "asc" }],
+      sort === "price-asc" && showPrices ? { price: "asc" } : sort === "price-desc" && showPrices ? { price: "desc" } : [{ featured: "desc" }, { category: { sortOrder: "asc" } }, { name: "asc" }],
   });
+  const tags = [...new Set(all.flatMap((p) => parseJson<string[]>(p.tags, [])))].sort();
+  const products = (tag ? all.filter((p) => parseJson<string[]>(p.tags, []).includes(tag)) : all).map((p) => toCard(p, showPrices));
   const total = categories.reduce((s, c) => s + c._count.products, 0);
+
   const href = (params: Record<string, string | undefined>) => {
     const sp = new URLSearchParams();
-    const merged = { category, q, sort, ...params };
-    for (const [k, v] of Object.entries(merged)) if (v) sp.set(k, v);
+    for (const [k, v] of Object.entries({ category, tag, q, sort, ...params })) if (v) sp.set(k, v);
     const s = sp.toString();
     return `/catalog${s ? `?${s}` : ""}`;
   };
 
   return (
-    <div className="container-page grid gap-8 py-8 lg:grid-cols-[220px_1fr]">
-      <aside>
-        <div className="label mb-3">Categories</div>
-        <nav className="flex gap-2 overflow-x-auto pb-2 lg:flex-col lg:gap-1 lg:overflow-visible">
-          <Link href={href({ category: undefined })} className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm ${!active ? "bg-brand-600 font-semibold text-white" : "hover:bg-slate-100"}`}>
-            All products <span className="opacity-60">({total})</span>
-          </Link>
-          {categories.map((c) => (
-            <Link key={c.id} href={href({ category: c.slug })} className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm ${active?.id === c.id ? "bg-brand-600 font-semibold text-white" : "hover:bg-slate-100"}`}>
-              {c.name} <span className="opacity-60">({c._count.products})</span>
-            </Link>
-          ))}
-        </nav>
-      </aside>
-
-      <section>
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="pt-28 md:pt-32">
+      <ViewsCanvas />
+      <div className="container-page">
+        <div className="grid gap-6 pb-10 md:grid-cols-[1fr_auto] md:items-end">
           <div>
-            <h1 className="h1">{active?.name ?? "All products"}</h1>
-            {active?.description && <p className="muted mt-1">{active.description}</p>}
+            <Reveal className="eyebrow mb-4">{products.length} of {total} models{tag && ` · ${tag}`}</Reveal>
+            <SplitHeading key={active?.slug ?? "all"} text={active ? active.name : "The *collection.*"} className="display text-[clamp(3rem,7vw,6rem)]" />
+            {active?.description && <Reveal delay={0.2} className="mt-4 max-w-xl text-ink-3">{active.description}</Reveal>}
           </div>
-          <form className="flex gap-2" action="/catalog">
+          <form action="/catalog" className="flex gap-2">
             {category && <input type="hidden" name="category" value={category} />}
-            <input name="q" defaultValue={q} placeholder="Search name or SKU…" className="input w-48" />
-            <select name="sort" defaultValue={sort ?? ""} className="input w-40">
-              <option value="">Recommended</option>
-              {showPrices && <option value="price-asc">Price: low to high</option>}
-              {showPrices && <option value="price-desc">Price: high to low</option>}
-            </select>
-            <button className="btn-outline">Go</button>
+            {tag && <input type="hidden" name="tag" value={tag} />}
+            <input name="q" defaultValue={q} placeholder="Search name or SKU" className="input w-52 rounded-full" />
+            {showPrices && (
+              <select name="sort" defaultValue={sort ?? ""} className="input w-36 rounded-full">
+                <option value="">Featured</option>
+                <option value="price-asc">Price ↑</option>
+                <option value="price-desc">Price ↓</option>
+              </select>
+            )}
+            <button className="btn-primary">Search</button>
           </form>
         </div>
+      </div>
 
+      <div className="sticky top-[60px] z-[3] border-y border-line bg-bone/85 backdrop-blur-xl">
+        <div className="container-page flex gap-2 overflow-x-auto py-3 [scrollbar-width:none]">
+          <Link href={href({ category: undefined })} className={`chip shrink-0 ${!active ? "chip-active" : ""}`}>All <span className="num opacity-50">{total}</span></Link>
+          {categories.map((c) => (
+            <Link key={c.id} href={href({ category: c.slug })} className={`chip shrink-0 ${active?.id === c.id ? "chip-active" : ""}`}>
+              {c.name} <span className="num opacity-50">{c._count.products}</span>
+            </Link>
+          ))}
+          <span className="mx-2 w-px shrink-0 bg-line" />
+          {tags.map((t) => (
+            <Link key={t} href={href({ tag: tag === t ? undefined : t })} className={`chip shrink-0 ${tag === t ? "border-clay bg-clay text-paper" : ""}`}>
+              {tag === t && "✕ "}{t}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <div className="container-page pt-12">
         {!showPrices && (
-          <div className="mb-6 rounded-xl border border-brand-200 bg-brand-50 p-4 text-sm text-brand-900">
-            Wholesale prices are visible to approved trade customers.{" "}
-            {user ? "Your account is under review." : <><Link href="/login" className="font-semibold underline">Log in</Link> or <Link href="/register" className="font-semibold underline">open a trade account</Link>.</>}
-          </div>
+          <Reveal className="mb-12 flex flex-col justify-between gap-4 rounded-[22px] bg-ink p-6 text-bone sm:flex-row sm:items-center">
+            <div>
+              <div className="font-display text-2xl">Trade prices are for registered stores.</div>
+              <div className="text-sm text-stone-2">{user ? "Your account is being reviewed — usually within a business day." : "Free to join. We verify your VAT number, then prices unlock."}</div>
+            </div>
+            {!user && (
+              <div className="flex gap-2">
+                <Link href="/login?next=/catalog" className="btn text-bone ring-1 ring-inset ring-white/25 hover:bg-white/10">Log in</Link>
+                <Link href="/register" className="btn bg-paper text-ink hover:bg-bone">Open account</Link>
+              </div>
+            )}
+          </Reveal>
         )}
-
         {products.length === 0 ? (
-          <div className="card p-10 text-center text-slate-500">No products found.</div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {products.map((p) => (
-              <Link key={p.id} href={`/products/${p.slug}`} className="card group flex flex-col overflow-hidden transition hover:shadow-md">
-                <div className="aspect-[4/3] overflow-hidden">
-                  <ProductImage src={parseJson<string[]>(p.images, [])[0]} name={p.name} category={p.category.slug} className="transition group-hover:scale-105" />
-                </div>
-                <div className="flex flex-1 flex-col gap-2 p-4">
-                  <div className="flex items-center justify-between text-xs text-slate-500">
-                    <span>{p.category.name}</span>
-                    <span className="font-mono">{p.sku}</span>
-                  </div>
-                  <div className="font-semibold leading-snug group-hover:text-brand-600">{p.name}</div>
-                  <p className="line-clamp-2 text-sm text-slate-500">{p.shortDescription}</p>
-                  <div className="mt-auto flex items-end justify-between pt-2">
-                    <div>
-                      {showPrices ? (
-                        <>
-                          <div className="text-lg font-bold text-brand-700">{money(p.price)}</div>
-                          <div className="text-xs text-slate-500">per {p.unit}, excl. VAT</div>
-                        </>
-                      ) : (
-                        <div className="text-sm font-semibold text-slate-500">Log in for price</div>
-                      )}
-                    </div>
-                    <div className="text-right text-xs text-slate-500">
-                      <div>MOQ <b className="text-slate-700">{p.moq} {p.unit}</b></div>
-                      <div>{p.leadTimeDays} days lead time</div>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
+          <div className="py-24 text-center">
+            <div className="font-display text-4xl">Nothing matches.</div>
+            <Link href="/catalog" className="btn-outline mt-6">Clear filters</Link>
           </div>
+        ) : (
+          <RevealGroup key={`${category}-${tag}-${q}-${sort}`} className="grid gap-x-5 gap-y-14 sm:grid-cols-2 xl:grid-cols-3">
+            {products.map((p, i) => (
+              <RevealItem key={p.id}><ProductCard p={p} index={i} /></RevealItem>
+            ))}
+          </RevealGroup>
         )}
-      </section>
+      </div>
     </div>
   );
 }

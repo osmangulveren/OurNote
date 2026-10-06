@@ -13,7 +13,9 @@ export const config = {
   appUrl: env("APP_URL", "http://localhost:3000"),
   vatRateRO: Number(env("VAT_RATE_RO", "21")),
   freightPerCbm: Number(env("FREIGHT_PER_CBM", "0")),
-  truckCapacityCbm: Number(env("TRUCK_CAPACITY_CBM", "90")),
+  truckCapacityCbm: Number(env("TRUCK_CAPACITY_CBM", "82")),
+  depositPercent: Number(env("DEPOSIT_PERCENT", "30")),
+  transitDays: Number(env("TRANSIT_DAYS", "6")),
   stripeEnabled: Boolean(process.env.STRIPE_SECRET_KEY),
 };
 

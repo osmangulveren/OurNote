@@ -4,7 +4,8 @@ import OrderItemsTable from "@/components/OrderItemsTable";
 import { OrderStepper } from "@/components/OrderTracker";
 import StatusBadge from "@/components/StatusBadge";
 import TotalsBox from "@/components/TotalsBox";
-import { adminMarkPaid, assignOrderToShipment, updateOrderStatus } from "@/app/actions/admin";
+import { adminRecordPayment, assignOrderToShipment, resolveClaim, updateOrderStatus } from "@/app/actions/admin";
+import { PAYMENT_LABEL } from "@/lib/status";
 import { countryName } from "@/lib/config";
 import { db } from "@/lib/db";
 import { dateTime, money } from "@/lib/format";
@@ -16,7 +17,7 @@ export default async function AdminOrder({ params }: { params: Promise<{ id: str
   const { id } = await params;
   const order = await db.order.findUnique({
     where: { id },
-    include: { company: true, user: true, items: { include: { product: true } }, events: { orderBy: { createdAt: "asc" } }, shipment: true },
+    include: { company: true, user: true, items: { include: { product: true } }, events: { orderBy: { createdAt: "asc" } }, shipment: true, claims: true },
   });
   if (!order) notFound();
   const trucks = await db.shipment.findMany({ where: { stage: { in: ["PLANNED", "LOADING"] } }, orderBy: { createdAt: "desc" } });
@@ -47,11 +48,20 @@ export default async function AdminOrder({ params }: { params: Promise<{ id: str
         </form>
         <div className="card space-y-3 p-5">
           <h2 className="font-bold">Payment</h2>
-          <p className="text-sm">{order.paymentMethod === "STRIPE" ? "Card (Stripe)" : "Bank transfer"} · <b>{order.paymentStatus}</b></p>
-          {order.paymentStatus !== "PAID" && (
-            <form action={adminMarkPaid}><input type="hidden" name="id" value={order.id} /><button className="btn-primary w-full">Mark as paid</button></form>
+          <p className="text-sm">
+            {order.paymentMethod === "STRIPE" ? "Card (Stripe)" : "Bank transfer"} · {order.paymentPlan === "DEPOSIT" ? "deposit plan" : "pay in full"}<br />
+            <b>{PAYMENT_LABEL[order.paymentStatus]}</b> · received {money(order.paidAmount)} of {money(order.total)}
+          </p>
+          {order.paymentStatus === "UNPAID" && order.paymentPlan === "DEPOSIT" && (
+            <form action={adminRecordPayment}><input type="hidden" name="id" value={order.id} /><input type="hidden" name="kind" value="DEPOSIT" /><button className="btn-outline w-full">Deposit received ({money(order.depositAmount)})</button></form>
           )}
-          {cost > 0 && <p className="text-xs text-slate-500">Purchase cost {money(cost)} · gross margin {money(order.subtotal - cost)}</p>}
+          {order.paymentStatus !== "PAID" && (
+            <form action={adminRecordPayment}><input type="hidden" name="id" value={order.id} /><input type="hidden" name="kind" value="BALANCE" /><button className="btn-primary w-full">{order.paymentStatus === "DEPOSIT_PAID" ? `Balance received (${money(order.total - order.paidAmount)})` : "Paid in full"}</button></form>
+          )}
+          {order.paymentStatus === "DEPOSIT_PAID" && order.shipment && ["LOADING", "DEPARTED"].includes(order.shipment.stage) && (
+            <p className="rounded-lg bg-clay-3 p-2 text-xs text-clay-2">Truck is loading — balance still open.</p>
+          )}
+          {cost > 0 && <p className="text-xs text-stone">Purchase cost {money(cost)} · gross margin {money(order.subtotal - cost)}</p>}
         </div>
         <div className="card space-y-3 p-5">
           <h2 className="font-bold">Truck</h2>
@@ -70,7 +80,26 @@ export default async function AdminOrder({ params }: { params: Promise<{ id: str
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        <section className="card overflow-x-auto"><OrderItemsTable items={order.items} /></section>
+        <div className="space-y-6">
+          <section className="card overflow-x-auto"><OrderItemsTable items={order.items} /></section>
+          {order.claims.length > 0 && (
+            <section className="card space-y-3 p-5">
+              <h2 className="font-bold">Claims</h2>
+              {order.claims.map((c) => (
+                <div key={c.id} className="rounded-xl bg-bone p-3 text-sm">
+                  <b>{c.kind} · {c.sku} × {c.quantity}</b> — {c.description}
+                  {c.status === "OPEN" ? (
+                    <form action={resolveClaim} className="mt-2 flex gap-2">
+                      <input type="hidden" name="id" value={c.id} />
+                      <input name="resolution" required placeholder="Resolution (e.g. replacement on TIR-2026-004)" className="input" />
+                      <button className="btn-primary">Resolve</button>
+                    </form>
+                  ) : <div className="mt-1 text-moss">Resolved: {c.resolution}</div>}
+                </div>
+              ))}
+            </section>
+          )}
+        </div>
         <div className="space-y-4">
           <TotalsBox totals={{ ...order, volume: order.totalVolumeM3 }} />
           <div className="card p-5 text-sm">

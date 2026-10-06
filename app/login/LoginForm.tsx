@@ -10,14 +10,14 @@ export default function LoginForm({ next }: { next?: string }) {
       <input type="hidden" name="next" value={next ?? ""} />
       <div>
         <label className="label" htmlFor="email">Email</label>
-        <input id="email" name="email" type="email" required className="input" autoComplete="email" />
+        <input id="email" name="email" type="email" required className="input py-3" autoComplete="email" />
       </div>
       <div>
         <label className="label" htmlFor="password">Password</label>
-        <input id="password" name="password" type="password" required className="input" autoComplete="current-password" />
+        <input id="password" name="password" type="password" required className="input py-3" autoComplete="current-password" />
       </div>
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
-      <button className="btn-primary w-full" disabled={pending}>{pending ? "Signing in…" : "Log in"}</button>
+      {state?.error && <p className="text-sm text-clay-2">{state.error}</p>}
+      <button className="btn-primary w-full py-3" disabled={pending}>{pending ? "Signing in…" : "Log in"}</button>
     </form>
   );
 }

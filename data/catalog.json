@@ -4,32 +4,32 @@
     {
       "slug": "sofa-beds",
       "name": "Sofa Beds",
-      "description": "Sofas that convert into a bed, most with storage underneath."
+      "description": "Sofas that open into a real bed — most with a storage box underneath. The best-selling category for city apartments."
     },
     {
       "slug": "corner-sofas",
-      "name": "Corner Sofas",
-      "description": "L- and U-shaped corner sofas, many with sleeping function."
+      "name": "Corner & Modular",
+      "description": "L-shaped and modular sofas. Reversible chaises, many with a sleeping function."
     },
     {
       "slug": "sofa-sets",
       "name": "Sofa Sets",
-      "description": "3+3+1 and 3+2+1 living room sets."
+      "description": "Coordinated 3+3+1 and 3+2+1 living room sets."
     },
     {
       "slug": "armchairs",
-      "name": "Armchairs & Bergères",
-      "description": "Accent armchairs, wing chairs and TV chairs."
+      "name": "Armchairs",
+      "description": "Accent chairs, wing chairs and recliners."
     },
     {
       "slug": "beds",
       "name": "Beds & Headboards",
-      "description": "Upholstered beds with storage and headboards."
+      "description": "Upholstered storage beds and wall headboards."
     },
     {
       "slug": "ottomans",
-      "name": "Ottomans & Poufs",
-      "description": "Storage ottomans, poufs and benches."
+      "name": "Poufs & Benches",
+      "description": "Storage ottomans, poufs and benches — easy add-on sales."
     }
   ],
   "products": [
@@ -37,25 +37,30 @@
       "unit": "pcs",
       "unitsPerCarton": 1,
       "leadTimeDays": 25,
-      "material": "Velvet (100% polyester, 300 g/m², Martindale 50,000)",
+      "material": "Velvet, 100% polyester",
       "colors": [
-        "Beige",
-        "Light Grey",
-        "Anthracite",
-        "Cream",
-        "Green",
-        "Navy"
+        "Sand Velvet",
+        "Taupe Velvet",
+        "Moss Velvet",
+        "Terracotta Velvet",
+        "Ink Velvet",
+        "Graphite Velvet"
       ],
       "images": [],
       "featured": true,
+      "tags": [
+        "Sofa bed",
+        "Storage",
+        "Small spaces"
+      ],
       "supplierName": "",
       "supplierPrice": 0,
       "sourceUrl": "",
       "sku": "SB-190",
-      "name": "Milano 3-Seater Sofa Bed with Storage",
+      "name": "Milano Sofa Bed",
       "category": "sofa-beds",
-      "shortDescription": "Pull-out sofa bed, 190 cm wide, opens to a 130 × 124 cm bed, storage box underneath.",
-      "description": "Compact 3-seater sofa bed with a front pull-out mechanism. The seat slides forward on chrome legs and the back cushions lie flat to create a 130 × 124 cm sleeping surface. Large storage box under the seat. Rounded roll arms with vertical channel stitching, 4 × 2 quilted seat and button-tufted back cushions.",
+      "shortDescription": "190 cm three-seater that opens into a 130 × 124 cm bed, with a storage box under the seat.",
+      "description": "Front pull-out mechanism on chrome runners: the seat slides forward and the back cushions lie flat, giving a 130 × 124 cm sleeping surface in one movement. Rolled arms with vertical channel stitching, a 4 × 2 quilted seat and button-tufted back cushions. A full-width storage box sits under the seat.",
       "price": 389,
       "priceTiers": [
         {
@@ -68,9 +73,24 @@
         }
       ],
       "moq": 4,
-      "dimensions": "190 × 90 × 85 cm (open depth 140 cm)",
+      "rrp": 899,
+      "dimensions": "190 × 90 × 85 cm · open depth 140 cm",
       "weightKg": 78,
       "volumeM3": 1.25,
+      "shape": {
+        "type": "sofa",
+        "width": 190,
+        "depth": 90,
+        "height": 85,
+        "armWidth": 30,
+        "seatHeight": 45,
+        "armHeight": 65,
+        "backCushions": 3,
+        "seatCushions": 2,
+        "openDepth": 140,
+        "legs": "chrome",
+        "channels": true
+      },
       "specs": [
         {
           "label": "Seat height",
@@ -90,7 +110,7 @@
         },
         {
           "label": "Storage",
-          "value": "Yes, under seat"
+          "value": "Full-width box under seat"
         },
         {
           "label": "Frame",
@@ -101,12 +121,8 @@
           "value": "DNS 30–32, 9 cm"
         },
         {
-          "label": "Legs",
-          "value": "Chrome + black plastic"
-        },
-        {
           "label": "Packaging",
-          "value": "Assembled, 5-layer carton + stretch film"
+          "value": "Assembled, 5-layer carton + corner guards"
         }
       ]
     },
@@ -114,25 +130,29 @@
       "unit": "pcs",
       "unitsPerCarton": 1,
       "leadTimeDays": 25,
-      "material": "Velvet (100% polyester, 300 g/m², Martindale 50,000)",
+      "material": "Velvet, 100% polyester",
       "colors": [
-        "Beige",
-        "Light Grey",
-        "Anthracite",
-        "Cream",
-        "Green",
-        "Navy"
+        "Sand Velvet",
+        "Taupe Velvet",
+        "Moss Velvet",
+        "Terracotta Velvet",
+        "Ink Velvet",
+        "Graphite Velvet"
       ],
       "images": [],
-      "featured": false,
+      "featured": true,
+      "tags": [
+        "Sofa bed",
+        "Storage"
+      ],
       "supplierName": "",
       "supplierPrice": 0,
       "sourceUrl": "",
       "sku": "SB-210",
-      "name": "Verona 3-Seater Sofa Bed, Click-Clack",
+      "name": "Verona Click-Clack",
       "category": "sofa-beds",
-      "shortDescription": "Click-clack sofa bed with 3 reclining positions and storage.",
-      "description": "Classic click-clack mechanism: the backrest folds flat in one movement. Bonnell spring seat for a firmer feel, storage box and removable back cushions.",
+      "shortDescription": "Click-clack sofa bed with three positions and a storage box.",
+      "description": "Classic click-clack mechanism: the backrest folds flat in one movement, or stops halfway as a lounger. Bonnell spring seat for a firmer feel, storage box and removable back cushions.",
       "price": 345,
       "priceTiers": [
         {
@@ -145,9 +165,21 @@
         }
       ],
       "moq": 4,
-      "dimensions": "210 × 95 × 88 cm (bed 190 × 120 cm)",
+      "rrp": 799,
+      "dimensions": "210 × 95 × 88 cm · bed 190 × 120 cm",
       "weightKg": 82,
       "volumeM3": 1.4,
+      "shape": {
+        "type": "sofa",
+        "width": 210,
+        "depth": 95,
+        "height": 88,
+        "armWidth": 22,
+        "backCushions": 3,
+        "seatCushions": 3,
+        "openDepth": 120,
+        "legs": "black"
+      },
       "specs": [
         {
           "label": "Seat height",
@@ -175,22 +207,27 @@
       "unit": "pcs",
       "unitsPerCarton": 1,
       "leadTimeDays": 25,
-      "material": "Bouclé fabric",
+      "material": "Bouclé, 85% polyester 15% acrylic",
       "colors": [
-        "Ecru",
-        "Stone",
-        "Taupe"
+        "Ecru Bouclé",
+        "Oat Bouclé",
+        "Stone Bouclé"
       ],
       "images": [],
       "featured": false,
+      "tags": [
+        "Sofa bed",
+        "Storage",
+        "Bouclé"
+      ],
       "supplierName": "",
       "supplierPrice": 0,
       "sourceUrl": "",
       "sku": "SB-230",
-      "name": "Roma Large Sofa Bed with Wooden Arms",
+      "name": "Roma Wide Sofa Bed",
       "category": "sofa-beds",
-      "shortDescription": "Large 3-seater with solid wood arm panels and storage.",
-      "description": "Wide sofa bed with solid beech arm panels, lift-up storage and a 140 × 195 cm sleeping area. Ideal for living rooms where the sofa is used as a guest bed.",
+      "shortDescription": "A 230 cm sofa bed with a full 140 × 195 cm bed — for living rooms that double as guest rooms.",
+      "description": "Wide three-seater with a lift-and-pull mechanism, generous storage and a full double bed. Upholstered in a heavy bouclé.",
       "price": 469,
       "priceTiers": [
         {
@@ -203,9 +240,22 @@
         }
       ],
       "moq": 3,
-      "dimensions": "230 × 100 × 90 cm (bed 195 × 140 cm)",
+      "rrp": 1099,
+      "dimensions": "230 × 100 × 90 cm · bed 195 × 140 cm",
       "weightKg": 96,
       "volumeM3": 1.7,
+      "shape": {
+        "type": "sofa",
+        "width": 230,
+        "depth": 100,
+        "height": 90,
+        "armWidth": 26,
+        "backCushions": 3,
+        "seatCushions": 3,
+        "openDepth": 195,
+        "legs": "wood",
+        "curved": true
+      },
       "specs": [
         {
           "label": "Seat height",
@@ -213,11 +263,7 @@
         },
         {
           "label": "Mechanism",
-          "value": "Pull-out"
-        },
-        {
-          "label": "Arms",
-          "value": "Solid beech, oak finish"
+          "value": "Lift & pull"
         },
         {
           "label": "Storage",
@@ -229,25 +275,27 @@
       "unit": "pcs",
       "unitsPerCarton": 1,
       "leadTimeDays": 25,
-      "material": "Velvet (100% polyester, 300 g/m², Martindale 50,000)",
+      "material": "Linen-look or velvet",
       "colors": [
-        "Beige",
-        "Light Grey",
-        "Anthracite",
-        "Cream",
-        "Green",
-        "Navy"
+        "Natural Linen",
+        "Olive Linen",
+        "Sand Velvet",
+        "Graphite Velvet"
       ],
       "images": [],
       "featured": false,
+      "tags": [
+        "Sofa bed",
+        "Small spaces"
+      ],
       "supplierName": "",
       "supplierPrice": 0,
       "sourceUrl": "",
       "sku": "SB-160",
-      "name": "Nova 2-Seater Sofa Bed",
+      "name": "Nova Two-Seater Bed",
       "category": "sofa-beds",
-      "shortDescription": "Space-saving 2-seater sofa bed for small living rooms.",
-      "description": "2-seater with a fold-out mechanism, slim arms and storage box. Fits studio apartments and kids' rooms.",
+      "shortDescription": "Compact two-seater that sleeps one adult — studios and kids' rooms.",
+      "description": "Slim arms, a fold-out mechanism and a storage box in a 160 cm footprint.",
       "price": 279,
       "priceTiers": [
         {
@@ -260,9 +308,21 @@
         }
       ],
       "moq": 5,
-      "dimensions": "160 × 85 × 82 cm (bed 120 × 190 cm)",
+      "rrp": 649,
+      "dimensions": "160 × 85 × 82 cm · bed 120 × 190 cm",
       "weightKg": 58,
       "volumeM3": 0.95,
+      "shape": {
+        "type": "sofa",
+        "width": 160,
+        "depth": 85,
+        "height": 82,
+        "armWidth": 16,
+        "backCushions": 2,
+        "seatCushions": 2,
+        "openDepth": 190,
+        "legs": "wood"
+      },
       "specs": [
         {
           "label": "Seat height",
@@ -282,25 +342,30 @@
       "unit": "pcs",
       "unitsPerCarton": 3,
       "leadTimeDays": 25,
-      "material": "Velvet (100% polyester, 300 g/m², Martindale 50,000)",
+      "material": "Velvet, 100% polyester",
       "colors": [
-        "Beige",
-        "Light Grey",
-        "Anthracite",
-        "Cream",
-        "Green",
-        "Navy"
+        "Sand Velvet",
+        "Taupe Velvet",
+        "Moss Velvet",
+        "Terracotta Velvet",
+        "Ink Velvet",
+        "Graphite Velvet"
       ],
       "images": [],
       "featured": true,
+      "tags": [
+        "Sofa bed",
+        "Storage",
+        "Modular"
+      ],
       "supplierName": "",
       "supplierPrice": 0,
       "sourceUrl": "",
       "sku": "CS-280L",
-      "name": "Toscana L-Shape Corner Sofa Bed",
+      "name": "Toscana Corner Bed",
       "category": "corner-sofas",
-      "shortDescription": "Reversible L-shaped corner sofa with bed function and storage.",
-      "description": "The chaise can be mounted left or right. Pull-out bed in the main section and storage in the chaise. Supplied in 3 modules for easy installation.",
+      "shortDescription": "Reversible L-shaped corner sofa with a pull-out bed and storage chaise.",
+      "description": "The chaise mounts left or right on site. Pull-out bed in the main section, storage in the chaise. Ships in three modules that fit through a standard door.",
       "price": 649,
       "priceTiers": [
         {
@@ -313,13 +378,24 @@
         }
       ],
       "moq": 2,
-      "dimensions": "280 × 180 × 85 cm (bed 140 × 200 cm)",
+      "rrp": 1499,
+      "dimensions": "280 × 180 × 85 cm · bed 140 × 200 cm",
       "weightKg": 145,
       "volumeM3": 2.6,
+      "shape": {
+        "type": "corner",
+        "width": 280,
+        "depth": 95,
+        "height": 85,
+        "armWidth": 20,
+        "chaiseDepth": 180,
+        "backCushions": 4,
+        "legs": "black"
+      },
       "specs": [
         {
           "label": "Configuration",
-          "value": "Reversible (left/right)"
+          "value": "Reversible left / right"
         },
         {
           "label": "Modules",
@@ -331,60 +407,76 @@
         },
         {
           "label": "Storage",
-          "value": "Chaise"
+          "value": "In chaise"
         }
       ]
     },
     {
       "unit": "pcs",
-      "unitsPerCarton": 4,
+      "unitsPerCarton": 3,
       "leadTimeDays": 25,
-      "material": "Velvet (100% polyester, 300 g/m², Martindale 50,000)",
+      "material": "Bouclé, 85% polyester 15% acrylic",
       "colors": [
-        "Beige",
-        "Light Grey",
-        "Anthracite",
-        "Cream",
-        "Green",
-        "Navy"
+        "Ecru Bouclé",
+        "Oat Bouclé",
+        "Stone Bouclé"
       ],
       "images": [],
-      "featured": false,
+      "featured": true,
+      "tags": [
+        "Curved",
+        "Bouclé",
+        "Modular"
+      ],
       "supplierName": "",
       "supplierPrice": 0,
       "sourceUrl": "",
-      "sku": "CS-310U",
-      "name": "Venezia U-Shape Corner Sofa",
+      "sku": "CS-300C",
+      "name": "Onda Curved Modular",
       "category": "corner-sofas",
-      "shortDescription": "Large U-shaped modular corner sofa with 2 storage chaises.",
-      "description": "Generous U-shaped layout with two storage chaises and a central bed function. Delivered in 4 modules.",
-      "price": 949,
+      "shortDescription": "A softly curved modular sofa in heavy bouclé — this season's statement piece.",
+      "description": "Three rounded modules that join into a gentle curve or a straight line. Deep seats, feather-wrapped foam cushions and hidden feet.",
+      "price": 899,
       "priceTiers": [
         {
-          "minQty": 6,
-          "price": 899
+          "minQty": 4,
+          "price": 859
         },
         {
-          "minQty": 20,
-          "price": 859
+          "minQty": 12,
+          "price": 819
         }
       ],
       "moq": 2,
-      "dimensions": "310 × 200 × 88 cm",
-      "weightKg": 210,
-      "volumeM3": 3.8,
+      "rrp": 2190,
+      "dimensions": "300 × 105 × 78 cm",
+      "weightKg": 120,
+      "volumeM3": 2.9,
+      "shape": {
+        "type": "sofa",
+        "width": 300,
+        "depth": 105,
+        "height": 78,
+        "armWidth": 24,
+        "seatHeight": 42,
+        "armHeight": 62,
+        "backCushions": 0,
+        "seatCushions": 3,
+        "legs": "hidden",
+        "curved": true
+      },
       "specs": [
         {
           "label": "Modules",
-          "value": "4"
+          "value": "3, free arrangement"
         },
         {
-          "label": "Storage",
-          "value": "2 chaises"
+          "label": "Seat depth",
+          "value": "68 cm"
         },
         {
-          "label": "Bed",
-          "value": "160 × 210 cm"
+          "label": "Cushions",
+          "value": "Foam wrapped in feather"
         }
       ]
     },
@@ -392,25 +484,28 @@
       "unit": "pcs",
       "unitsPerCarton": 2,
       "leadTimeDays": 25,
-      "material": "Velvet (100% polyester, 300 g/m², Martindale 50,000)",
+      "material": "Linen-look or velvet",
       "colors": [
-        "Beige",
-        "Light Grey",
-        "Anthracite",
-        "Cream",
-        "Green",
-        "Navy"
+        "Natural Linen",
+        "Olive Linen",
+        "Sand Velvet",
+        "Taupe Velvet",
+        "Moss Velvet"
       ],
       "images": [],
       "featured": false,
+      "tags": [
+        "Small spaces",
+        "Modular"
+      ],
       "supplierName": "",
       "supplierPrice": 0,
       "sourceUrl": "",
       "sku": "CS-260M",
-      "name": "Lucca Compact Corner Sofa",
+      "name": "Lucca Compact Corner",
       "category": "corner-sofas",
-      "shortDescription": "Compact corner sofa for small spaces, no bed function.",
-      "description": "A slim-armed compact corner sofa with deep seats and removable cushion covers.",
+      "shortDescription": "Compact corner sofa with removable covers — no bed function.",
+      "description": "Slim arms, deep seats and covers that come off for cleaning.",
       "price": 529,
       "priceTiers": [
         {
@@ -423,9 +518,20 @@
         }
       ],
       "moq": 2,
+      "rrp": 1249,
       "dimensions": "260 × 160 × 82 cm",
       "weightKg": 110,
       "volumeM3": 2.1,
+      "shape": {
+        "type": "corner",
+        "width": 260,
+        "depth": 90,
+        "height": 82,
+        "armWidth": 14,
+        "chaiseDepth": 160,
+        "backCushions": 3,
+        "legs": "wood"
+      },
       "specs": [
         {
           "label": "Configuration",
@@ -441,25 +547,29 @@
       "unit": "set",
       "unitsPerCarton": 3,
       "leadTimeDays": 25,
-      "material": "Velvet (100% polyester, 300 g/m², Martindale 50,000)",
+      "material": "Velvet, 100% polyester",
       "colors": [
-        "Beige",
-        "Light Grey",
-        "Anthracite",
-        "Cream",
-        "Green",
-        "Navy"
+        "Sand Velvet",
+        "Taupe Velvet",
+        "Moss Velvet",
+        "Terracotta Velvet",
+        "Ink Velvet",
+        "Graphite Velvet"
       ],
       "images": [],
-      "featured": true,
+      "featured": false,
+      "tags": [
+        "Sofa bed",
+        "Storage"
+      ],
       "supplierName": "",
       "supplierPrice": 0,
       "sourceUrl": "",
       "sku": "SS-331",
-      "name": "Siena Sofa Set 3+3+1",
+      "name": "Siena Set 3+3+1",
       "category": "sofa-sets",
-      "shortDescription": "Two 3-seater sofa beds and a matching armchair.",
-      "description": "Complete living room set: two Milano-style 3-seater sofa beds with storage plus a matching armchair. Priced per set.",
+      "shortDescription": "Two three-seater sofa beds and a matching armchair, priced per set.",
+      "description": "Two Milano-type sofa beds with storage and a matching armchair. The most requested set for showroom displays.",
       "price": 1049,
       "priceTiers": [
         {
@@ -472,13 +582,26 @@
         }
       ],
       "moq": 2,
-      "dimensions": "Sofa 210 × 90 × 85 cm, armchair 95 × 85 × 85 cm",
+      "rrp": 2390,
+      "dimensions": "Sofa 210 × 90 × 85 cm · armchair 95 × 85 × 85 cm",
       "weightKg": 200,
       "volumeM3": 3.4,
+      "shape": {
+        "type": "sofa",
+        "width": 210,
+        "depth": 90,
+        "height": 85,
+        "armWidth": 28,
+        "backCushions": 3,
+        "seatCushions": 3,
+        "openDepth": 140,
+        "legs": "chrome",
+        "channels": true
+      },
       "specs": [
         {
-          "label": "Set content",
-          "value": "2 × 3-seater, 1 × armchair"
+          "label": "Contents",
+          "value": "2 × three-seater, 1 × armchair"
         },
         {
           "label": "Bed function",
@@ -490,25 +613,28 @@
       "unit": "set",
       "unitsPerCarton": 3,
       "leadTimeDays": 25,
-      "material": "Velvet (100% polyester, 300 g/m², Martindale 50,000)",
+      "material": "Velvet, 100% polyester",
       "colors": [
-        "Beige",
-        "Light Grey",
-        "Anthracite",
-        "Cream",
-        "Green",
-        "Navy"
+        "Sand Velvet",
+        "Taupe Velvet",
+        "Moss Velvet",
+        "Terracotta Velvet",
+        "Ink Velvet",
+        "Graphite Velvet"
       ],
       "images": [],
       "featured": false,
+      "tags": [
+        "Classic"
+      ],
       "supplierName": "",
       "supplierPrice": 0,
       "sourceUrl": "",
       "sku": "SS-321",
-      "name": "Firenze Sofa Set 3+2+1",
+      "name": "Firenze Set 3+2+1",
       "category": "sofa-sets",
-      "shortDescription": "3-seater sofa bed, 2-seater and armchair.",
-      "description": "Classic 3+2+1 set with tufted backs and solid wood feet. The 3-seater has a bed function and storage.",
+      "shortDescription": "Three-seater sofa bed, two-seater and armchair on solid wood feet.",
+      "description": "Classic 3+2+1 set with tufted backs. The three-seater has a bed function and storage.",
       "price": 899,
       "priceTiers": [
         {
@@ -521,17 +647,28 @@
         }
       ],
       "moq": 2,
-      "dimensions": "3-seater 210 cm, 2-seater 170 cm, armchair 95 cm",
+      "rrp": 2090,
+      "dimensions": "Three-seater 210 cm · two-seater 170 cm · armchair 95 cm",
       "weightKg": 175,
       "volumeM3": 3,
+      "shape": {
+        "type": "sofa",
+        "width": 210,
+        "depth": 92,
+        "height": 88,
+        "armWidth": 24,
+        "backCushions": 3,
+        "seatCushions": 3,
+        "legs": "wood"
+      },
       "specs": [
         {
-          "label": "Set content",
+          "label": "Contents",
           "value": "3 + 2 + 1"
         },
         {
           "label": "Feet",
-          "value": "Solid wood, walnut"
+          "value": "Solid beech, walnut finish"
         }
       ]
     },
@@ -539,25 +676,28 @@
       "unit": "pcs",
       "unitsPerCarton": 1,
       "leadTimeDays": 25,
-      "material": "Velvet (100% polyester, 300 g/m², Martindale 50,000)",
+      "material": "Velvet, 100% polyester",
       "colors": [
-        "Beige",
-        "Light Grey",
-        "Anthracite",
-        "Cream",
-        "Green",
-        "Navy"
+        "Sand Velvet",
+        "Taupe Velvet",
+        "Moss Velvet",
+        "Terracotta Velvet",
+        "Ink Velvet",
+        "Graphite Velvet"
       ],
       "images": [],
       "featured": true,
+      "tags": [
+        "Classic"
+      ],
       "supplierName": "",
       "supplierPrice": 0,
       "sourceUrl": "",
       "sku": "AC-095",
-      "name": "Bella Wing Armchair",
+      "name": "Bella Wing Chair",
       "category": "armchairs",
-      "shortDescription": "Wing-back armchair with solid wood legs.",
-      "description": "Classic wing armchair with a high back, pocket-spring seat and tapered solid beech legs.",
+      "shortDescription": "High-back wing chair with pocket springs and tapered beech legs.",
+      "description": "A wing chair with a high back, pocket-spring seat and tapered solid beech legs.",
       "price": 159,
       "priceTiers": [
         {
@@ -570,9 +710,20 @@
         }
       ],
       "moq": 6,
+      "rrp": 399,
       "dimensions": "78 × 85 × 105 cm",
       "weightKg": 22,
       "volumeM3": 0.62,
+      "shape": {
+        "type": "armchair",
+        "width": 78,
+        "depth": 85,
+        "height": 105,
+        "armWidth": 14,
+        "seatHeight": 45,
+        "armHeight": 64,
+        "legs": "wood"
+      },
       "specs": [
         {
           "label": "Seat height",
@@ -592,22 +743,26 @@
       "unit": "pcs",
       "unitsPerCarton": 1,
       "leadTimeDays": 25,
-      "material": "Bouclé fabric",
+      "material": "Bouclé",
       "colors": [
-        "Ecru",
-        "Stone",
-        "Taupe"
+        "Ecru Bouclé",
+        "Oat Bouclé",
+        "Stone Bouclé"
       ],
       "images": [],
       "featured": false,
+      "tags": [
+        "Curved",
+        "Bouclé"
+      ],
       "supplierName": "",
       "supplierPrice": 0,
       "sourceUrl": "",
       "sku": "AC-080",
-      "name": "Luna Bouclé Accent Chair",
+      "name": "Luna Bouclé Chair",
       "category": "armchairs",
-      "shortDescription": "Rounded bouclé accent chair, metal base.",
-      "description": "Soft rounded shape upholstered in bouclé fabric on a black powder-coated metal base.",
+      "shortDescription": "Rounded bouclé accent chair — an easy add-on to any sofa sale.",
+      "description": "A soft, rounded shell upholstered in bouclé on hidden feet.",
       "price": 129,
       "priceTiers": [
         {
@@ -620,13 +775,25 @@
         }
       ],
       "moq": 6,
+      "rrp": 329,
       "dimensions": "80 × 75 × 78 cm",
       "weightKg": 15,
       "volumeM3": 0.48,
+      "shape": {
+        "type": "armchair",
+        "width": 80,
+        "depth": 75,
+        "height": 78,
+        "armWidth": 16,
+        "seatHeight": 42,
+        "armHeight": 60,
+        "legs": "hidden",
+        "curved": true
+      },
       "specs": [
         {
           "label": "Base",
-          "value": "Powder-coated steel"
+          "value": "Hidden plinth"
         }
       ]
     },
@@ -634,25 +801,27 @@
       "unit": "pcs",
       "unitsPerCarton": 1,
       "leadTimeDays": 25,
-      "material": "Velvet (100% polyester, 300 g/m², Martindale 50,000)",
+      "material": "Velvet, 100% polyester",
       "colors": [
-        "Beige",
-        "Light Grey",
-        "Anthracite",
-        "Cream",
-        "Green",
-        "Navy"
+        "Taupe Velvet",
+        "Moss Velvet",
+        "Terracotta Velvet",
+        "Ink Velvet",
+        "Graphite Velvet"
       ],
       "images": [],
       "featured": false,
+      "tags": [
+        "Recliner"
+      ],
       "supplierName": "",
       "supplierPrice": 0,
       "sourceUrl": "",
       "sku": "AC-TV1",
-      "name": "Relax TV Chair with Footrest",
+      "name": "Relax Recliner",
       "category": "armchairs",
-      "shortDescription": "Manual recliner with integrated footrest.",
-      "description": "Comfortable TV armchair with a manual reclining mechanism and integrated footrest.",
+      "shortDescription": "Manual recliner with an integrated footrest.",
+      "description": "TV armchair with a manual reclining mechanism and integrated footrest.",
       "price": 219,
       "priceTiers": [
         {
@@ -665,9 +834,20 @@
         }
       ],
       "moq": 4,
+      "rrp": 549,
       "dimensions": "85 × 90 × 102 cm",
       "weightKg": 34,
       "volumeM3": 0.8,
+      "shape": {
+        "type": "armchair",
+        "width": 85,
+        "depth": 90,
+        "height": 102,
+        "armWidth": 18,
+        "seatHeight": 46,
+        "armHeight": 62,
+        "legs": "black"
+      },
       "specs": [
         {
           "label": "Mechanism",
@@ -683,25 +863,29 @@
       "unit": "pcs",
       "unitsPerCarton": 3,
       "leadTimeDays": 25,
-      "material": "Velvet (100% polyester, 300 g/m², Martindale 50,000)",
+      "material": "Velvet, 100% polyester",
       "colors": [
-        "Beige",
-        "Light Grey",
-        "Anthracite",
-        "Cream",
-        "Green",
-        "Navy"
+        "Sand Velvet",
+        "Taupe Velvet",
+        "Moss Velvet",
+        "Terracotta Velvet",
+        "Ink Velvet",
+        "Graphite Velvet"
       ],
       "images": [],
       "featured": true,
+      "tags": [
+        "Storage",
+        "Channels"
+      ],
       "supplierName": "",
       "supplierPrice": 0,
       "sourceUrl": "",
       "sku": "BD-160",
-      "name": "Capri Storage Bed 160 × 200",
+      "name": "Capri Storage Bed 160",
       "category": "beds",
-      "shortDescription": "Upholstered bed with gas-lift storage and quilted headboard.",
-      "description": "Double bed with a gas-lift slatted base revealing a full-size storage box. Channel-quilted headboard. Mattress not included.",
+      "shortDescription": "Gas-lift storage bed with a channel-quilted headboard. Mattress not included.",
+      "description": "A gas-lift slatted base opens onto a full-size storage box. Channel-quilted headboard.",
       "price": 329,
       "priceTiers": [
         {
@@ -714,9 +898,18 @@
         }
       ],
       "moq": 4,
-      "dimensions": "172 × 215 × 120 cm (mattress 160 × 200)",
+      "rrp": 799,
+      "dimensions": "172 × 215 × 120 cm · mattress 160 × 200",
       "weightKg": 85,
       "volumeM3": 1.1,
+      "shape": {
+        "type": "bed",
+        "width": 172,
+        "depth": 215,
+        "height": 120,
+        "channels": true,
+        "legs": "hidden"
+      },
       "specs": [
         {
           "label": "Mattress size",
@@ -736,25 +929,29 @@
       "unit": "pcs",
       "unitsPerCarton": 3,
       "leadTimeDays": 25,
-      "material": "Velvet (100% polyester, 300 g/m², Martindale 50,000)",
+      "material": "Velvet, 100% polyester",
       "colors": [
-        "Beige",
-        "Light Grey",
-        "Anthracite",
-        "Cream",
-        "Green",
-        "Navy"
+        "Sand Velvet",
+        "Taupe Velvet",
+        "Moss Velvet",
+        "Terracotta Velvet",
+        "Ink Velvet",
+        "Graphite Velvet"
       ],
       "images": [],
       "featured": false,
+      "tags": [
+        "Storage",
+        "Channels"
+      ],
       "supplierName": "",
       "supplierPrice": 0,
       "sourceUrl": "",
       "sku": "BD-180",
-      "name": "Capri Storage Bed 180 × 200",
+      "name": "Capri Storage Bed 180",
       "category": "beds",
-      "shortDescription": "King-size version of the Capri storage bed.",
-      "description": "Same as Capri 160 in king size.",
+      "shortDescription": "King-size Capri with gas-lift storage.",
+      "description": "The Capri storage bed in king size.",
       "price": 359,
       "priceTiers": [
         {
@@ -767,9 +964,18 @@
         }
       ],
       "moq": 4,
-      "dimensions": "192 × 215 × 120 cm (mattress 180 × 200)",
+      "rrp": 899,
+      "dimensions": "192 × 215 × 120 cm · mattress 180 × 200",
       "weightKg": 92,
       "volumeM3": 1.2,
+      "shape": {
+        "type": "bed",
+        "width": 192,
+        "depth": 215,
+        "height": 120,
+        "channels": true,
+        "legs": "hidden"
+      },
       "specs": [
         {
           "label": "Mattress size",
@@ -785,25 +991,28 @@
       "unit": "pcs",
       "unitsPerCarton": 1,
       "leadTimeDays": 25,
-      "material": "Velvet (100% polyester, 300 g/m², Martindale 50,000)",
+      "material": "Velvet, 100% polyester",
       "colors": [
-        "Beige",
-        "Light Grey",
-        "Anthracite",
-        "Cream",
-        "Green",
-        "Navy"
+        "Sand Velvet",
+        "Taupe Velvet",
+        "Moss Velvet",
+        "Terracotta Velvet",
+        "Ink Velvet",
+        "Graphite Velvet"
       ],
       "images": [],
       "featured": false,
+      "tags": [
+        "Channels"
+      ],
       "supplierName": "",
       "supplierPrice": 0,
       "sourceUrl": "",
       "sku": "HB-160",
-      "name": "Channel Headboard 160 cm",
+      "name": "Channel Headboard 160",
       "category": "beds",
-      "shortDescription": "Wall-mounted velvet headboard with vertical channels.",
-      "description": "Upholstered headboard with vertical channel stitching, wall-mounted.",
+      "shortDescription": "Wall-mounted headboard with vertical channels.",
+      "description": "Upholstered headboard with vertical channel stitching. Wall-mounted, hardware included.",
       "price": 69,
       "priceTiers": [
         {
@@ -816,9 +1025,17 @@
         }
       ],
       "moq": 10,
+      "rrp": 179,
       "dimensions": "160 × 8 × 60 cm",
       "weightKg": 9,
       "volumeM3": 0.12,
+      "shape": {
+        "type": "headboard",
+        "width": 160,
+        "depth": 8,
+        "height": 60,
+        "channels": true
+      },
       "specs": [
         {
           "label": "Mounting",
@@ -830,25 +1047,31 @@
       "unit": "pcs",
       "unitsPerCarton": 2,
       "leadTimeDays": 25,
-      "material": "Velvet (100% polyester, 300 g/m², Martindale 50,000)",
+      "material": "Velvet, 100% polyester",
       "colors": [
-        "Beige",
-        "Light Grey",
-        "Anthracite",
-        "Cream",
-        "Green",
-        "Navy"
+        "Sand Velvet",
+        "Taupe Velvet",
+        "Moss Velvet",
+        "Terracotta Velvet",
+        "Ink Velvet",
+        "Graphite Velvet",
+        "Ecru Bouclé",
+        "Oat Bouclé",
+        "Stone Bouclé"
       ],
       "images": [],
       "featured": false,
+      "tags": [
+        "Curved"
+      ],
       "supplierName": "",
       "supplierPrice": 0,
       "sourceUrl": "",
       "sku": "OT-045",
-      "name": "Round Velvet Pouf",
+      "name": "Round Pouf",
       "category": "ottomans",
-      "shortDescription": "Round pouf with button tufting.",
-      "description": "Ø45 cm pouf with a button-tufted top, matching the sofa range colours.",
+      "shortDescription": "Ø45 cm pouf with a button-tufted top in every range colour.",
+      "description": "A round pouf with a button-tufted top, matching the sofa range colours.",
       "price": 29,
       "priceTiers": [
         {
@@ -861,9 +1084,16 @@
         }
       ],
       "moq": 20,
+      "rrp": 79,
       "dimensions": "Ø45 × 42 cm",
       "weightKg": 4,
       "volumeM3": 0.09,
+      "shape": {
+        "type": "pouf",
+        "width": 45,
+        "depth": 45,
+        "height": 42
+      },
       "specs": [
         {
           "label": "Filling",
@@ -875,25 +1105,28 @@
       "unit": "pcs",
       "unitsPerCarton": 1,
       "leadTimeDays": 25,
-      "material": "Velvet (100% polyester, 300 g/m², Martindale 50,000)",
+      "material": "Velvet, 100% polyester",
       "colors": [
-        "Beige",
-        "Light Grey",
-        "Anthracite",
-        "Cream",
-        "Green",
-        "Navy"
+        "Sand Velvet",
+        "Taupe Velvet",
+        "Moss Velvet",
+        "Terracotta Velvet",
+        "Ink Velvet",
+        "Graphite Velvet"
       ],
       "images": [],
       "featured": false,
+      "tags": [
+        "Storage"
+      ],
       "supplierName": "",
       "supplierPrice": 0,
       "sourceUrl": "",
       "sku": "OT-120",
-      "name": "Storage Bench 120 cm",
+      "name": "Storage Bench 120",
       "category": "ottomans",
-      "shortDescription": "Upholstered bench with lift-up lid and storage.",
-      "description": "Bench for the end of a bed or the hallway with a hinged lid and storage space.",
+      "shortDescription": "Upholstered bench with a soft-close lid.",
+      "description": "For the end of a bed or the hallway, with a hinged soft-close lid.",
       "price": 79,
       "priceTiers": [
         {
@@ -906,13 +1139,21 @@
         }
       ],
       "moq": 10,
+      "rrp": 199,
       "dimensions": "120 × 40 × 45 cm",
       "weightKg": 14,
       "volumeM3": 0.25,
+      "shape": {
+        "type": "bench",
+        "width": 120,
+        "depth": 40,
+        "height": 45,
+        "legs": "wood"
+      },
       "specs": [
         {
           "label": "Storage",
-          "value": "Lift-up lid with soft-close hinge"
+          "value": "Lift-up lid, soft-close hinge"
         }
       ]
     },
@@ -920,25 +1161,30 @@
       "unit": "pcs",
       "unitsPerCarton": 1,
       "leadTimeDays": 25,
-      "material": "Velvet (100% polyester, 300 g/m², Martindale 50,000)",
+      "material": "Velvet, 100% polyester",
       "colors": [
-        "Beige",
-        "Light Grey",
-        "Anthracite",
-        "Cream",
-        "Green",
-        "Navy"
+        "Sand Velvet",
+        "Taupe Velvet",
+        "Moss Velvet",
+        "Terracotta Velvet",
+        "Ink Velvet",
+        "Graphite Velvet",
+        "Natural Linen",
+        "Olive Linen"
       ],
       "images": [],
       "featured": false,
+      "tags": [
+        "Storage"
+      ],
       "supplierName": "",
       "supplierPrice": 0,
       "sourceUrl": "",
       "sku": "OT-SQ60",
-      "name": "Square Storage Ottoman 60 cm",
+      "name": "Square Ottoman 60",
       "category": "ottomans",
-      "shortDescription": "Square ottoman with removable lid.",
-      "description": "Multi-purpose storage ottoman; the lid flips to become a tray.",
+      "shortDescription": "Square storage ottoman; the lid flips over into a tray.",
+      "description": "A multi-purpose storage ottoman whose lid turns into a serving tray.",
       "price": 49,
       "priceTiers": [
         {
@@ -951,9 +1197,17 @@
         }
       ],
       "moq": 10,
+      "rrp": 129,
       "dimensions": "60 × 60 × 42 cm",
       "weightKg": 8,
       "volumeM3": 0.17,
+      "shape": {
+        "type": "bench",
+        "width": 60,
+        "depth": 60,
+        "height": 42,
+        "legs": "hidden"
+      },
       "specs": [
         {
           "label": "Lid",

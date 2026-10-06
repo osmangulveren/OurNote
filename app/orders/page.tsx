@@ -1,10 +1,14 @@
 import Link from "next/link";
+import { Reveal, RevealGroup, RevealItem, SplitHeading } from "@/components/motion/Reveal";
+import RouteMap from "@/components/RouteMap";
 import StatusBadge from "@/components/StatusBadge";
 import { requireBuyer } from "@/lib/auth";
+import { countryName } from "@/lib/config";
 import { db } from "@/lib/db";
 import { date, money } from "@/lib/format";
+import { mapStage, PAYMENT_LABEL } from "@/lib/status";
 
-export const metadata = { title: "My orders" };
+export const metadata = { title: "Orders" };
 
 export default async function OrdersPage() {
   const user = await requireBuyer();
@@ -13,49 +17,51 @@ export default async function OrdersPage() {
     include: { shipment: true, _count: { select: { items: true } } },
     orderBy: { createdAt: "desc" },
   });
-  const inTransit = orders.filter((o) => ["LOADING", "IN_TRANSIT", "CUSTOMS", "OUT_FOR_DELIVERY"].includes(o.status));
+  const moving = orders.filter((o) => ["LOADING", "IN_TRANSIT", "CUSTOMS", "OUT_FOR_DELIVERY"].includes(o.status));
 
   return (
-    <div className="container-page py-8">
-      <h1 className="h1 mb-6">My orders</h1>
-      {inTransit.length > 0 && (
-        <div className="mb-6 grid gap-3 md:grid-cols-2">
-          {inTransit.map((o) => (
-            <Link key={o.id} href={`/orders/${o.id}`} className="card flex items-center gap-4 border-brand-200 bg-brand-50 p-4 hover:border-brand-500">
-              <span className="text-3xl">🚚</span>
-              <div className="flex-1">
-                <div className="font-semibold">{o.number} is on its way</div>
-                <div className="muted">{o.shipment ? `Truck ${o.shipment.truckPlate} · ETA ${date(o.shipment.eta)}` : "Being prepared for shipping"}</div>
+    <div className="container-page pt-24 md:pt-28">
+      <Reveal className="eyebrow mb-3">{orders.length} orders · {moving.length} on the road</Reveal>
+      <SplitHeading text="Your *orders.*" className="display mb-10 text-[clamp(3rem,7vw,6rem)]" />
+
+      {moving.map((o) => (
+        <Reveal key={o.id} className="mb-8">
+          <Link href={`/orders/${o.id}`} className="group grid overflow-hidden rounded-[28px] bg-paper ring-1 ring-line transition hover:ring-ink/25 lg:grid-cols-[1fr_1.4fr]">
+            <div className="flex flex-col justify-between gap-8 p-8">
+              <div>
+                <StatusBadge status={o.status} />
+                <div className="mt-4 font-display text-5xl leading-none">{o.number}</div>
+                <div className="mt-2 text-ink-3">
+                  {o.shipment ? <>Truck <span className="num">{o.shipment.truckPlate}</span> · arriving around <b className="font-medium text-ink">{date(o.shipment.eta)}</b></> : "Being prepared for the truck"}
+                </div>
               </div>
-              <StatusBadge status={o.status} />
-            </Link>
-          ))}
-        </div>
-      )}
+              <span className="font-mono text-[11px] uppercase tracking-wider">Follow the truck →</span>
+            </div>
+            <RouteMap country={o.deliveryCountry} stage={mapStage(o.status, o.shipment?.stage)} label={o.deliveryCity} className="h-72 lg:h-auto lg:min-h-[320px]" />
+          </Link>
+        </Reveal>
+      ))}
+
       {orders.length === 0 ? (
-        <div className="card p-10 text-center">
-          <p className="muted mb-4">You haven&apos;t placed any orders yet.</p>
-          <Link href="/catalog" className="btn-primary">Browse catalog</Link>
+        <div className="py-20 text-center">
+          <p className="muted mb-6">No orders yet.</p>
+          <Link href="/catalog" className="btn-primary">Browse the collection</Link>
         </div>
       ) : (
-        <div className="card overflow-x-auto">
-          <table className="table">
-            <thead><tr><th>Order</th><th>Date</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th /></tr></thead>
-            <tbody>
-              {orders.map((o) => (
-                <tr key={o.id}>
-                  <td className="font-mono font-semibold">{o.number}</td>
-                  <td>{date(o.createdAt)}</td>
-                  <td>{o._count.items}</td>
-                  <td className="font-semibold">{money(o.total)}</td>
-                  <td>{o.paymentStatus === "PAID" ? <span className="badge bg-emerald-100 text-emerald-800">Paid</span> : <span className="badge bg-amber-100 text-amber-800">Unpaid</span>}</td>
-                  <td><StatusBadge status={o.status} /></td>
-                  <td className="text-right"><Link href={`/orders/${o.id}`} className="font-semibold text-brand-600">Track →</Link></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <RevealGroup className="border-t border-line">
+          {orders.map((o) => (
+            <RevealItem key={o.id}>
+              <Link href={`/orders/${o.id}`} className="group grid grid-cols-2 items-center gap-3 border-b border-line py-5 transition-colors hover:bg-paper sm:grid-cols-[1.2fr_1fr_1fr_1fr_1fr_auto] sm:px-3">
+                <span className="font-display text-2xl leading-none">{o.number}</span>
+                <span className="text-sm text-ink-3">{date(o.createdAt)}</span>
+                <span className="text-sm text-ink-3">{o.deliveryCity}, {countryName(o.deliveryCountry)}</span>
+                <span className="num">{money(o.total)}</span>
+                <span className="text-sm">{PAYMENT_LABEL[o.paymentStatus]}</span>
+                <span className="flex items-center justify-end gap-3"><StatusBadge status={o.status} /><span className="transition-transform group-hover:translate-x-1">→</span></span>
+              </Link>
+            </RevealItem>
+          ))}
+        </RevealGroup>
       )}
     </div>
   );

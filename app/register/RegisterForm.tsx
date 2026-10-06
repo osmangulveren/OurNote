@@ -8,7 +8,7 @@ export default function RegisterForm({ countries }: { countries: [string, string
   return (
     <form action={action} className="grid gap-4 sm:grid-cols-2">
       <fieldset className="contents">
-        <legend className="col-span-full text-sm font-bold text-slate-700">Company</legend>
+        <legend className="col-span-full font-mono text-[11px] uppercase tracking-[0.16em] text-stone">01 — Your store</legend>
         <div className="sm:col-span-2">
           <label className="label">Company name</label>
           <input name="companyName" required className="input" />
@@ -42,7 +42,7 @@ export default function RegisterForm({ countries }: { countries: [string, string
         </div>
       </fieldset>
       <fieldset className="contents">
-        <legend className="col-span-full mt-2 text-sm font-bold text-slate-700">Your login</legend>
+        <legend className="col-span-full mt-4 font-mono text-[11px] uppercase tracking-[0.16em] text-stone">02 — Your login</legend>
         <div>
           <label className="label">Your name</label>
           <input name="name" required className="input" />
@@ -56,8 +56,8 @@ export default function RegisterForm({ countries }: { countries: [string, string
           <input name="password" type="password" minLength={8} required className="input" />
         </div>
       </fieldset>
-      {state?.error && <p className="text-sm text-red-600 sm:col-span-2">{state.error}</p>}
-      <button className="btn-primary sm:col-span-2" disabled={pending}>{pending ? "Submitting…" : "Apply for a trade account"}</button>
+      {state?.error && <p className="text-sm text-clay-2 sm:col-span-2">{state.error}</p>}
+      <button className="btn-primary py-3 sm:col-span-2" disabled={pending}>{pending ? "Submitting…" : "Apply for a trade account"}</button>
     </form>
   );
 }
