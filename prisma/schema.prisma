@@ -74,6 +74,7 @@ model Product {
   rrp              Float       @default(0) // suggested retail price incl. VAT, for the buyer's margin calculator
   tags             String      @default("[]") // JSON string[] e.g. ["Sofa bed","Storage","Curved"]
   shape            String      @default("{}") // JSON 3D model parameters (see lib/shape.ts)
+  modelUrl         String      @default("") // optional GLB (e.g. generated from a photo with TRELLIS.2)
   // Internal only — never shown to buyers (you sell under your own brand)
   supplierName     String      @default("")
   supplierPrice    Float       @default(0)

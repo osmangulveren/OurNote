@@ -6,7 +6,8 @@ import { requireAdmin } from "@/lib/auth";
 import { importCatalog } from "@/lib/catalog-import";
 import { config } from "@/lib/config";
 import { db } from "@/lib/db";
-import { slugify } from "@/lib/format";
+import { parseJson, slugify } from "@/lib/format";
+import { saveModel } from "@/lib/models";
 import { nextShipmentCode, recordPayment, setOrderStatus } from "@/lib/orders";
 import { ORDER_STATUSES, SHIPMENT_STAGES } from "@/lib/status";
 
@@ -84,6 +85,17 @@ export async function saveProduct(form: FormData) {
   if (!data.sku || !data.name || !data.categoryId || data.price <= 0) {
     throw new Error("SKU, name, category and price are required");
   }
+  // 3D model: an uploaded GLB wins over a pasted URL; the shape JSON keeps the display options.
+  const existing = id ? await db.product.findUnique({ where: { id } }) : null;
+  const upload = form.get("modelFile");
+  const shape = { ...parseJson<Record<string, unknown>>(existing?.shape, {}) };
+  const widthCm = Number(shape.width) || 0;
+  // A new upload is baked true to size and turned by the given angle, so its rotation resets to 0.
+  const uploaded = upload instanceof File ? await saveModel(data.sku, upload, { widthCm, rotationY: num(form, "modelRotationY") }) : null;
+  const modelUrl = form.get("removeModel") === "on" ? "" : uploaded ?? str(form, "modelUrl");
+  shape.modelRotationY = uploaded ? 0 : num(form, "modelRotationY");
+  shape.modelTint = form.get("modelTint") === "on";
+  Object.assign(data, { modelUrl, shape: JSON.stringify(shape) });
   if (id) {
     await db.product.update({ where: { id }, data });
   } else {
@@ -239,4 +251,21 @@ export async function markOrderDelivered(form: FormData) {
   await requireAdmin();
   await setOrderStatus(str(form, "orderId"), "DELIVERED", str(form, "note") || "Delivered to store");
   revalidatePath("/admin", "layout");
+}
+
+/** Stores a GLB generated in the browser (from the procedural model) for a product. */
+export async function uploadGeneratedModel(form: FormData) {
+  await requireAdmin();
+  const product = await db.product.findUnique({ where: { id: str(form, "id") } });
+  const file = form.get("file");
+  if (!product || !(file instanceof File)) return { error: "Missing product or file" };
+  try {
+    const url = await saveModel(product.sku, file, { widthCm: Number(parseJson<{ width?: number }>(product.shape, {}).width) || 0 });
+    if (!url) return { error: "Empty file" };
+    await db.product.update({ where: { id: product.id }, data: { modelUrl: url } });
+    revalidatePath("/", "layout");
+    return { url };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Upload failed" };
+  }
 }

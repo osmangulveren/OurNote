@@ -7,6 +7,18 @@ import * as THREE from "three";
 import type { FabricKind } from "@/lib/fabrics";
 import type { Shape } from "@/lib/shape";
 import FurnitureModel, { modelBounds } from "./FurnitureModel";
+import GLBModel from "./GLBModel";
+
+/** The product's GLB when it has one (falls back to the procedural model while loading or when opened as a bed). */
+function ProductModel({ shape, hex, kind, open, modelUrl }: { shape: Shape; hex: string; kind: FabricKind; open?: boolean; modelUrl?: string }) {
+  const procedural = <FurnitureModel shape={shape} hex={hex} kind={kind} open={open} />;
+  if (!modelUrl || open) return procedural;
+  return (
+    <Suspense fallback={procedural}>
+      <GLBModel url={modelUrl} shape={shape} hex={hex} />
+    </Suspense>
+  );
+}
 
 export type StageProps = {
   shape: Shape;
@@ -17,6 +29,7 @@ export type StageProps = {
   autoRotate?: boolean;
   controls?: boolean;
   className?: string;
+  modelUrl?: string;
 };
 
 /** Soft studio light built from light-formers, so no HDR file has to be downloaded. */
@@ -109,7 +122,7 @@ function cameraFor(shape: Shape) {
 }
 
 /** Full interactive stage (hero, product configurator, fabric viewer). */
-export default function Stage({ shape, hex, kind, open, showDims, autoRotate = false, controls = true, className }: StageProps) {
+export default function Stage({ shape, hex, kind, open, showDims, autoRotate = false, controls = true, className, modelUrl }: StageProps) {
   const cam = cameraFor(shape);
   const [interacting, setInteracting] = useState(false);
   return (
@@ -119,7 +132,7 @@ export default function Stage({ shape, hex, kind, open, showDims, autoRotate = f
           <Studio />
           <Lights />
           <Turntable enabled={autoRotate && !interacting}>
-            <FurnitureModel shape={shape} hex={hex} kind={kind} open={open} />
+            <ProductModel shape={shape} hex={hex} kind={kind} open={open} modelUrl={modelUrl} />
             {showDims && <Dimensions shape={shape} open={open} />}
           </Turntable>
           <ContactShadows position={[0, 0.001, 0]} opacity={0.5} scale={10} blur={2.6} far={2.5} resolution={512} color="#3a2f22" />
@@ -184,7 +197,7 @@ function ThumbCamera({ shape }: { shape: Shape }) {
   );
 }
 
-export function ModelThumb({ shape, hex, kind, active = false, className }: { shape: Shape; hex: string; kind: FabricKind; active?: boolean; className?: string }) {
+export function ModelThumb({ shape, hex, kind, active = false, className, modelUrl }: { shape: Shape; hex: string; kind: FabricKind; active?: boolean; className?: string; modelUrl?: string }) {
   return (
     <View className={className}>
       <ThumbCamera shape={shape} />
@@ -193,7 +206,7 @@ export function ModelThumb({ shape, hex, kind, active = false, className }: { sh
       <directionalLight position={[3, 5, 4]} intensity={1.6} />
       <directionalLight position={[-4, 2, -2]} intensity={0.4} />
       <ThumbSpin active={active}>
-        <FurnitureModel shape={shape} hex={hex} kind={kind} />
+        <ProductModel shape={shape} hex={hex} kind={kind} modelUrl={modelUrl} />
       </ThumbSpin>
     </View>
   );

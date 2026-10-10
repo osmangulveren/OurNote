@@ -28,7 +28,7 @@ export default function ProductCard({ p, index = 0 }: { p: CardProduct; index?: 
           ))}
         </div>
         <span className="absolute right-4 top-4 z-[2] font-mono text-[10px] tracking-wider text-stone">{String(index + 1).padStart(2, "0")}</span>
-        <ModelThumb shape={p.shape} hex={f.hex} kind={f.kind} active={hover} className="absolute inset-0" />
+        <ModelThumb shape={p.shape} hex={f.hex} kind={f.kind} active={hover} className="absolute inset-0" modelUrl={p.modelUrl || undefined} />
         <span className="absolute bottom-3 left-4 z-[2] font-mono text-[10px] uppercase tracking-wider text-stone">
           {p.shape.width}×{p.shape.type === "corner" ? p.shape.chaiseDepth : p.shape.depth}×{p.shape.height} cm
         </span>

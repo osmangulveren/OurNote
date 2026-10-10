@@ -6,6 +6,7 @@ import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { FabricKind } from "@/lib/fabrics";
 import type { Shape } from "@/lib/shape";
+import { channelPanel, quiltedCushion, softBox, tuftedPillow } from "./geometry";
 import { useFabric, useStaticMaterials } from "./materials";
 
 type Props = { shape: Shape; hex: string; kind: FabricKind; open?: boolean };
@@ -139,7 +140,20 @@ function Sofa({ s, fabric, mats, open }: { s: Shape; fabric: THREE.Material; mat
     });
   });
 
-  const seatCushions = Array.from({ length: nSeat }, (_, i) => {
+  const quilt = s.quilt;
+  const geo = useMemo(() => {
+    if (!quilt && !s.tufted) return null;
+    const bw = innerW / Math.max(1, nBack) + 0.015;
+    return {
+      seat: quilt ? quiltedCushion(innerW - 0.008, cushionT, seatD, quilt[0], quilt[1]) : null,
+      bed: quilt && ext ? quiltedCushion(innerW - 0.02, cushionT - 0.01, 1, quilt[0], 1, 0.004) : null,
+      pillow: s.tufted ? tuftedPillow(bw, backH, 0.2) : null,
+    };
+  }, [quilt, s.tufted, innerW, cushionT, seatD, ext, nBack, backH]);
+
+  const seatCushions = geo?.seat ? (
+    <mesh geometry={geo.seat} material={fabric} position={[0, sh - cushionT / 2, seatZ]} castShadow receiveShadow />
+  ) : Array.from({ length: nSeat }, (_, i) => {
     const w = innerW / nSeat;
     return (
       <RoundedBox
@@ -166,7 +180,7 @@ function Sofa({ s, fabric, mats, open }: { s: Shape; fabric: THREE.Material; mat
       {s.legs === "hidden" && (
         <mesh position={[0, legH / 2, 0]} material={mats.plinth}><boxGeometry args={[W - 0.06, legH, D - 0.08]} /></mesh>
       )}
-      <Legs s={s} positions={legPos} mats={mats} h={legH} />
+      {s.armStyle !== "roll" && <Legs s={s} positions={legPos} mats={mats} h={legH} />}
 
       {/* Back frame */}
       <RoundedBox
@@ -204,8 +218,8 @@ function Sofa({ s, fabric, mats, open }: { s: Shape; fabric: THREE.Material; mat
 
       {/* Bed extension that appears behind the sliding seat */}
       {ext > 0 && (
-        <mesh ref={filler} position={[0, sh - cushionT / 2, -D / 2 + backT]} material={fabric} visible={false} receiveShadow>
-          <boxGeometry args={[innerW - 0.02, cushionT - 0.01, 1]} />
+        <mesh ref={filler} position={[0, sh - cushionT / 2, -D / 2 + backT]} material={fabric} visible={false} receiveShadow geometry={geo?.bed ?? undefined}>
+          {!geo?.bed && <boxGeometry args={[innerW - 0.02, cushionT - 0.01, 1]} />}
         </mesh>
       )}
 
@@ -242,15 +256,31 @@ function Sofa({ s, fabric, mats, open }: { s: Shape; fabric: THREE.Material; mat
             position={[-innerW / 2 + w * (i + 0.5), sh + backH / 2 - 0.02, -D / 2 + backT + 0.09]}
             rotation={[-0.2, 0, 0]}
           >
-            <RoundedBox args={[w + 0.015, backH, 0.2]} radius={0.09} smoothness={6} material={fabric} castShadow />
-            {/* Button tufting */}
-            {!armchair && (
-              <mesh position={[0, 0, 0.1]} material={fabric}><sphereGeometry args={[0.012, 12, 12]} /></mesh>
+            {geo?.pillow ? (
+              <>
+                <mesh geometry={geo.pillow} material={fabric} castShadow />
+                <mesh position={[0, 0, 0.068]} material={fabric}><sphereGeometry args={[0.013, 12, 12]} /></mesh>
+              </>
+            ) : (
+              <>
+                <RoundedBox args={[w + 0.015, backH, 0.2]} radius={0.09} smoothness={6} material={fabric} castShadow />
+                {/* Button tufting */}
+                {!armchair && (
+                  <mesh position={[0, 0, 0.1]} material={fabric}><sphereGeometry args={[0.012, 12, 12]} /></mesh>
+                )}
+              </>
             )}
           </group>
         );
       })}
 
+      {s.armStyle === "roll" ? (
+        <>
+          <RollArm x={-W / 2 + aw / 2} aw={aw} ah={ah} depth={D} s={s} fabric={fabric} mats={mats} outer={-1} />
+          <RollArm x={W / 2 - aw / 2} aw={aw} ah={ah} depth={chaiseD} z={(chaiseD - D) / 2} s={s} fabric={fabric} mats={mats} outer={1} />
+        </>
+      ) : (
+      <>
       <Arm x={-W / 2 + aw / 2} aw={aw} ah={ah} legH={legH} depth={D} s={s} fabric={fabric} outer={-1} />
       <Arm
         x={W / 2 - aw / 2}
@@ -263,6 +293,39 @@ function Sofa({ s, fabric, mats, open }: { s: Shape; fabric: THREE.Material; mat
         fabric={fabric}
         outer={1}
       />
+      </>
+      )}
+    </group>
+  );
+}
+
+/**
+ * Arm with a padded roll cap that overhangs outwards, vertical channels on the outer
+ * panel and small black feet — the Milano-style arm.
+ */
+function RollArm({ x, aw, ah, depth, z = 0, s, fabric, mats, outer }: {
+  x: number; aw: number; ah: number; depth: number; z?: number; s: Shape; fabric: THREE.Material; mats: Mats; outer: 1 | -1;
+}) {
+  const feet = 0.03;
+  const capH = 0.17;
+  const bodyH = ah - feet - capH * 0.55;
+  const g = useMemo(() => ({
+    body: softBox(aw, bodyH, depth - 0.02, 0.04),
+    cap: softBox(aw + 0.05, capH, depth + 0.012, 0.08),
+    channels: s.channels ? channelPanel(depth - 0.1, bodyH - 0.06, 0.05, 6) : null,
+  }), [aw, bodyH, depth, s.channels]);
+  return (
+    <group position={[x, 0, z]}>
+      <mesh geometry={g.body} material={fabric} position={[0, feet + bodyH / 2, 0]} castShadow receiveShadow />
+      <mesh geometry={g.cap} material={fabric} position={[outer * 0.022, ah - capH / 2, 0.004]} castShadow receiveShadow />
+      {g.channels && (
+        <mesh geometry={g.channels} material={fabric} position={[outer * (aw / 2 - 0.012), feet + bodyH / 2 - 0.01, 0]} rotation={[0, (outer * Math.PI) / 2, 0]} castShadow />
+      )}
+      {[-1, 1].map((k) => (
+        <mesh key={k} position={[0, feet / 2, k * (depth / 2 - 0.09)]} material={mats.black}>
+          <cylinderGeometry args={[0.025, 0.025, feet, 16]} />
+        </mesh>
+      ))}
     </group>
   );
 }

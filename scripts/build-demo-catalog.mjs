@@ -34,12 +34,14 @@ const p = (o) => ({
 const products = [
   p({
     sku: "SB-190", name: "Milano Sofa Bed", category: "sofa-beds", featured: true,
+    // Exported from the built-in model (Admin → product → Generate GLB). Replace with a TRELLIS.2 scan of the real product.
+    modelUrl: "/models/sb-190-demo.glb",
     tags: ["Sofa bed", "Storage", "Small spaces"],
     shortDescription: "190 cm three-seater that opens into a 130 × 124 cm bed, with a storage box under the seat.",
     description: "Front pull-out mechanism on chrome runners: the seat slides forward and the back cushions lie flat, giving a 130 × 124 cm sleeping surface in one movement. Rolled arms with vertical channel stitching, a 4 × 2 quilted seat and button-tufted back cushions. A full-width storage box sits under the seat.",
     price: 389, priceTiers: [{ minQty: 10, price: 369 }, { minQty: 30, price: 349 }], moq: 4, rrp: 899,
     dimensions: "190 × 90 × 85 cm · open depth 140 cm", weightKg: 78, volumeM3: 1.25,
-    shape: { type: "sofa", width: 190, depth: 90, height: 85, armWidth: 30, seatHeight: 45, armHeight: 65, backCushions: 3, seatCushions: 2, openDepth: 140, legs: "chrome", channels: true },
+    shape: { type: "sofa", width: 190, depth: 90, height: 85, armWidth: 30, seatHeight: 45, armHeight: 65, backCushions: 3, seatCushions: 2, openDepth: 140, legs: "chrome", channels: true, armStyle: "roll", quilt: [4, 2], tufted: true },
     specs: [
       { label: "Seat height", value: "45 cm" }, { label: "Arm width", value: "30 cm" },
       { label: "Sleeping area", value: "130 × 124 cm" }, { label: "Mechanism", value: "Front pull-out" },
@@ -117,7 +119,7 @@ const products = [
     description: "Two Milano-type sofa beds with storage and a matching armchair. The most requested set for showroom displays.",
     price: 1049, priceTiers: [{ minQty: 5, price: 999 }, { minQty: 15, price: 949 }], moq: 2, unit: "set", rrp: 2390,
     dimensions: "Sofa 210 × 90 × 85 cm · armchair 95 × 85 × 85 cm", weightKg: 200, volumeM3: 3.4, unitsPerCarton: 3,
-    shape: { type: "sofa", width: 210, depth: 90, height: 85, armWidth: 28, backCushions: 3, seatCushions: 3, openDepth: 140, legs: "chrome", channels: true },
+    shape: { type: "sofa", width: 210, depth: 90, height: 85, armWidth: 28, backCushions: 3, seatCushions: 3, openDepth: 140, legs: "chrome", channels: true, armStyle: "roll", quilt: [4, 2], tufted: true },
     specs: [{ label: "Contents", value: "2 × three-seater, 1 × armchair" }, { label: "Bed function", value: "Both sofas" }],
   }),
   p({

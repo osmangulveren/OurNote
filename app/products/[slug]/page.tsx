@@ -70,7 +70,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </div>
 
         <ProductClient
-          product={{ id: product.id, slug: product.slug, name: product.name, sku: product.sku, unit: product.unit, moq: product.moq, volumeM3: product.volumeM3, leadTimeDays: product.leadTimeDays, rrp: product.rrp }}
+          product={{ id: product.id, slug: product.slug, modelUrl: product.modelUrl, name: product.name, sku: product.sku, unit: product.unit, moq: product.moq, volumeM3: product.volumeM3, leadTimeDays: product.leadTimeDays, rrp: product.rrp }}
           shape={shapeOf(product)}
           colors={colors}
           tiers={showPrices ? tiersOf(product) : null}

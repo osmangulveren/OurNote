@@ -9,3 +9,6 @@ prisma/*.db-journal
 next-env.d.ts
 .DS_Store
 data/scraped-*.json
+# uploaded 3D models (keep only the bundled demo)
+storage/models/*.glb
+!storage/models/sb-190-demo.glb

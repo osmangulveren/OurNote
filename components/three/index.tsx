@@ -12,3 +12,4 @@ export const Stage = dynamic(() => import("./Stage"), { ssr: false, loading: () 
 export const ViewsCanvas = dynamic(() => import("./Stage").then((m) => m.ViewsCanvas), { ssr: false });
 export const ModelThumb = dynamic(() => import("./Stage").then((m) => m.ModelThumb), { ssr: false });
 export const TrailerStage = dynamic(() => import("./TrailerStage"), { ssr: false, loading: () => <Placeholder className="h-full w-full" /> });
+export const ModelExporter = dynamic(() => import("./ModelExporter"), { ssr: false, loading: () => <Placeholder className="h-64" /> });

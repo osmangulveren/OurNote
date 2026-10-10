@@ -7,7 +7,7 @@ export type CardProduct = {
   id: string; slug: string; name: string; sku: string; category: string; categorySlug: string;
   shortDescription: string; colors: string[]; tags: string[]; shape: Shape;
   moq: number; unit: string; leadTimeDays: number; volumeM3: number;
-  price: number | null; rrp: number | null; featured: boolean;
+  price: number | null; rrp: number | null; featured: boolean; modelUrl: string;
 };
 
 export function toCard(p: Product & { category: Category }, showPrices: boolean): CardProduct {
@@ -15,6 +15,6 @@ export function toCard(p: Product & { category: Category }, showPrices: boolean)
     id: p.id, slug: p.slug, name: p.name, sku: p.sku, category: p.category.name, categorySlug: p.category.slug,
     shortDescription: p.shortDescription, colors: parseJson<string[]>(p.colors, []), tags: parseJson<string[]>(p.tags, []),
     shape: shapeOf(p), moq: p.moq, unit: p.unit, leadTimeDays: p.leadTimeDays, volumeM3: p.volumeM3,
-    price: showPrices ? p.price : null, rrp: showPrices && p.rrp ? p.rrp : null, featured: p.featured,
+    price: showPrices ? p.price : null, rrp: showPrices && p.rrp ? p.rrp : null, featured: p.featured, modelUrl: p.modelUrl,
   };
 }

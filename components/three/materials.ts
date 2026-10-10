@@ -63,6 +63,7 @@ export function useFabric(hex: string, kind: FabricKind) {
       bumpScale: kind === "boucle" ? 2.2 : kind === "linen" ? 0.6 : 0.25,
     });
     m.sheenColor = new THREE.Color(hex).lerp(new THREE.Color("#ffffff"), 0.35);
+    m.name = "fabric"; // exported GLBs keep this name so the viewer can recolour them
     return m;
     // the material is rebuilt only when the fabric family changes; colour animates below
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -80,7 +81,7 @@ export function useFabric(hex: string, kind: FabricKind) {
 export function useStaticMaterials() {
   return useMemo(
     () => ({
-      chrome: new THREE.MeshStandardMaterial({ color: "#e8e8e8", metalness: 1, roughness: 0.18 }),
+      chrome: new THREE.MeshStandardMaterial({ name: "chrome", color: "#e8e8e8", metalness: 1, roughness: 0.18 }),
       wood: new THREE.MeshStandardMaterial({ color: "#6e4b30", roughness: 0.55 }),
       black: new THREE.MeshStandardMaterial({ color: "#1c1b18", roughness: 0.6 }),
       linen: new THREE.MeshPhysicalMaterial({ color: "#efebe3", roughness: 0.95, sheen: 0.3 }),

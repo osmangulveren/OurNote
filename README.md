@@ -19,6 +19,9 @@ Wholesale ordering platform for European retailers. You sell products sourced fr
 - **Motion:** smooth scrolling, staggered reveals, headlines that rise word by word, a live booking countdown and an animated route.
 - **Design:** warm bone/ink/terracotta palette, Instrument Serif + Instrument Sans + JetBrains Mono, hairlines and dimension-line details borrowed from technical drawings. Printable **product sheets** with an auto-generated technical drawing for the shop floor.
 
+## 3D from product photos
+Attach a GLB made from a product photo with **Microsoft TRELLIS.2** (MIT). The shop scales it to the real size, recolours it with the chosen fabric, and adds **View in your room** (AR on phones via model-viewer). See [docs/3d-models.md](docs/3d-models.md) for the no-install demo, the GPU batch script (`scripts/photo-to-3d/trellis2_to_glb.py`) and `npm run model:attach`.
+
 ## Admin
 - Products, categories, catalog import (JSON / Alibaba scraper). Manufacturer, purchase price, source URL and margin are visible **only to you**.
 - Trade account approvals, orders (record deposit / balance), claims, swatch kits.

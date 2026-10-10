@@ -16,6 +16,11 @@ export type Shape = {
   chaiseDepth?: number; // corner sofas
   legs?: "chrome" | "wood" | "hidden" | "black";
   channels?: boolean; // vertical channel stitching on arms / headboard
+  armStyle?: "roll"; // padded roll cap that overhangs the arm (e.g. Milano)
+  quilt?: [number, number]; // seat quilting columns × rows (single seat block)
+  tufted?: boolean; // loose back pillows with star tufting
+  modelRotationY?: number; // degrees, to face an imported GLB forward
+  modelTint?: boolean; // recolour an imported GLB with the chosen fabric (default true)
 };
 
 export function shapeOf(p: { shape: string; dimensions?: string }): Shape {

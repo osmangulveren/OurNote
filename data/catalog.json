@@ -59,6 +59,7 @@
       "sku": "SB-190",
       "name": "Milano Sofa Bed",
       "category": "sofa-beds",
+      "modelUrl": "/models/sb-190-demo.glb",
       "shortDescription": "190 cm three-seater that opens into a 130 × 124 cm bed, with a storage box under the seat.",
       "description": "Front pull-out mechanism on chrome runners: the seat slides forward and the back cushions lie flat, giving a 130 × 124 cm sleeping surface in one movement. Rolled arms with vertical channel stitching, a 4 × 2 quilted seat and button-tufted back cushions. A full-width storage box sits under the seat.",
       "price": 389,
@@ -89,7 +90,13 @@
         "seatCushions": 2,
         "openDepth": 140,
         "legs": "chrome",
-        "channels": true
+        "channels": true,
+        "armStyle": "roll",
+        "quilt": [
+          4,
+          2
+        ],
+        "tufted": true
       },
       "specs": [
         {
@@ -596,7 +603,13 @@
         "seatCushions": 3,
         "openDepth": 140,
         "legs": "chrome",
-        "channels": true
+        "channels": true,
+        "armStyle": "roll",
+        "quilt": [
+          4,
+          2
+        ],
+        "tufted": true
       },
       "specs": [
         {

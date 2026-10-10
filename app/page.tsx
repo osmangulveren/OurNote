@@ -79,7 +79,7 @@ export default async function Home() {
           </div>
           {heroShape && (
             <Reveal delay={0.2} y={40} className="relative z-[2] -mx-5 sm:mx-0">
-              <Configurator shape={heroShape} colors={heroColors.length ? heroColors : ["Moss Velvet"]} initialColor={heroColors.find((c) => c.includes("Moss")) ?? heroColors[0]} stageClassName="h-[460px] sm:h-[560px] lg:h-[640px]" />
+              <Configurator shape={heroShape} colors={heroColors.length ? heroColors : ["Moss Velvet"]} initialColor={heroColors.find((c) => c.includes("Moss")) ?? heroColors[0]} stageClassName="h-[460px] sm:h-[560px] lg:h-[640px]" modelUrl={hero!.modelUrl || undefined} name={hero!.name} />
               <Link href={`/products/${hero!.slug}`} className="absolute left-4 top-16 z-[3] rounded-2xl bg-paper/80 px-4 py-3 ring-1 ring-line backdrop-blur transition hover:ring-ink/30 sm:left-6">
                 <div className="eyebrow">{hero!.sku}</div>
                 <div className="font-display text-2xl leading-none">{hero!.name}</div>
@@ -140,7 +140,7 @@ export default async function Home() {
                 <Link href={`/catalog?category=${c.slug}`} className="group flex h-full flex-col overflow-hidden rounded-[22px] bg-paper ring-1 ring-line transition hover:ring-ink/25">
                   <div className="relative aspect-[4/3]">
                     <div className="bg-grid absolute inset-0 opacity-50" />
-                    <ModelThumb shape={shapeOf(rep)} hex={f.hex} kind={f.kind} className="absolute inset-0" />
+                    <ModelThumb shape={shapeOf(rep)} hex={f.hex} kind={f.kind} className="absolute inset-0" modelUrl={rep.modelUrl || undefined} />
                     <span className="absolute left-5 top-4 font-mono text-[10px] tracking-wider text-stone">0{i + 1}</span>
                   </div>
                   <div className="flex items-end justify-between border-t border-line p-5">

@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
+import ARViewer from "@/components/ARViewer";
 import { Stage } from "@/components/three";
 import { fabricOf, FABRIC_KIND_LABEL } from "@/lib/fabrics";
 import type { Shape } from "@/lib/shape";
@@ -15,10 +16,12 @@ type Props = {
   initialColor?: string;
   onColorChange?: (c: string) => void;
   compact?: boolean;
+  modelUrl?: string;
+  name?: string;
 };
 
 /** 3D product stage with fabric swatches, bed toggle and dimension overlay. */
-export default function Configurator({ shape, colors, className = "", stageClassName = "h-[420px]", autoRotate = true, initialColor, onColorChange, compact }: Props) {
+export default function Configurator({ shape, colors, className = "", stageClassName = "h-[420px]", autoRotate = true, initialColor, onColorChange, compact, modelUrl, name }: Props) {
   const [color, setColor] = useState(initialColor ?? colors[0] ?? "Sand Velvet");
   const [open, setOpen] = useState(false);
   const [dims, setDims] = useState(false);
@@ -31,7 +34,7 @@ export default function Configurator({ shape, colors, className = "", stageClass
 
   return (
     <div className={`relative ${className}`}>
-      <Stage shape={shape} hex={f.hex} kind={f.kind} open={open} showDims={dims} autoRotate={autoRotate && !open} className={stageClassName} />
+      <Stage shape={shape} hex={f.hex} kind={f.kind} open={open} showDims={dims} autoRotate={autoRotate && !open} className={stageClassName} modelUrl={modelUrl} />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-4">
         <div className="pointer-events-auto flex gap-2">
@@ -43,6 +46,7 @@ export default function Configurator({ shape, colors, className = "", stageClass
           <button onClick={() => setDims((d) => !d)} className={`chip ${dims ? "chip-active" : ""}`}>
             <RulerIcon /> Dimensions
           </button>
+          {modelUrl && <ARViewer src={modelUrl} name={name ?? "Product"} hex={f.hex} />}
         </div>
         {!compact && <span className="eyebrow hidden pt-2 sm:block">Drag to rotate</span>}
       </div>

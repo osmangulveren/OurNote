@@ -9,7 +9,7 @@ import type { Shape } from "@/lib/shape";
 
 type Tier = { minQty: number; price: number };
 type Props = {
-  product: { id: string; slug: string; name: string; sku: string; unit: string; moq: number; volumeM3: number; leadTimeDays: number; rrp: number };
+  product: { id: string; slug: string; modelUrl: string; name: string; sku: string; unit: string; moq: number; volumeM3: number; leadTimeDays: number; rrp: number };
   shape: Shape;
   colors: string[];
   tiers: Tier[] | null; // null = prices hidden
@@ -53,7 +53,7 @@ export default function ProductClient({ product, shape, colors, tiers, canOrder,
       <div className="lg:sticky lg:top-24 lg:self-start">
         <div className="overflow-hidden rounded-[28px] bg-paper ring-1 ring-line">
           <div className="bg-grid">
-            <Configurator shape={shape} colors={colors} onColorChange={setColor} stageClassName="h-[420px] sm:h-[560px]" />
+            <Configurator shape={shape} colors={colors} onColorChange={setColor} stageClassName="h-[420px] sm:h-[560px]" modelUrl={product.modelUrl || undefined} name={product.name} />
           </div>
         </div>
       </div>

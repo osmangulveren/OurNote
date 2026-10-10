@@ -1,10 +1,12 @@
 import type { Category, Product } from "@prisma/client";
 import { saveProduct } from "@/app/actions/admin";
 import { parseJson } from "@/lib/format";
+import { shapeOf } from "@/lib/shape";
 
 export default function ProductForm({ product, categories }: { product?: Product; categories: Category[] }) {
   const tiers = parseJson<{ minQty: number; price: number }[]>(product?.priceTiers, []);
   const specs = parseJson<{ label: string; value: string }[]>(product?.specs, []);
+  const shape = product ? shapeOf(product) : null;
   const F = ({ name, label, def, type = "text", span }: { name: string; label: string; def?: string | number; type?: string; span?: boolean }) => (
     <div className={span ? "sm:col-span-2" : ""}>
       <label className="label">{label}</label>
@@ -12,7 +14,7 @@ export default function ProductForm({ product, categories }: { product?: Product
     </div>
   );
   return (
-    <form action={saveProduct} className="space-y-6">
+    <form action={saveProduct} className="space-y-6" encType="multipart/form-data">
       <input type="hidden" name="id" value={product?.id ?? ""} />
       <section className="card grid gap-4 p-6 sm:grid-cols-2">
         <h2 className="font-bold sm:col-span-2">Basics</h2>
@@ -63,6 +65,26 @@ export default function ProductForm({ product, categories }: { product?: Product
           <label className="label">Specifications — one per line as Label: Value</label>
           <textarea name="specs" rows={5} defaultValue={specs.map((s) => `${s.label}: ${s.value}`).join("\n")} className="input font-mono text-xs" />
         </div>
+      </section>
+
+      <section className="card grid gap-4 p-6 sm:grid-cols-3">
+        <div className="sm:col-span-3">
+          <h2 className="font-bold">3D model (GLB)</h2>
+          <p className="muted mt-1">
+            Optional. Upload a GLB made from a product photo (e.g. with TRELLIS.2 — see docs/3d-models.md) or generated from the
+            built-in model below. Without one, the procedural model is shown.
+          </p>
+        </div>
+        <div className="sm:col-span-2">
+          <label className="label">Upload .glb</label>
+          <input name="modelFile" type="file" accept=".glb,model/gltf-binary" className="input" />
+        </div>
+        <F name="modelUrl" label="…or model URL" def={product?.modelUrl} />
+        <F name="modelRotationY" label="Turn model (degrees)" def={shape?.modelRotationY ?? 0} type="number" />
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="modelTint" defaultChecked={shape?.modelTint ?? true} className="accent-ink" /> Recolour with chosen fabric</label>
+        {product?.modelUrl && (
+          <label className="flex items-center gap-2 text-sm text-clay-2"><input type="checkbox" name="removeModel" className="accent-ink" /> Remove current model</label>
+        )}
       </section>
 
       <section className="card grid gap-4 border-dashed bg-slate-50 p-6 sm:grid-cols-3">
