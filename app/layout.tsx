@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "B2B Tedarik MVP",
-  description: "B2B müşteriler için ürün, sipariş ve ön muhasebe yönetimi",
+  title: "LabelScan — Bilinçli seçimler",
+  description: "Ürün etiketlerini tara, daha temiz seçimler yap ve israfı azalt.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
