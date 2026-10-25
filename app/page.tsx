@@ -2,72 +2,38 @@
 
 import { useState } from "react";
 
-const tabs = [
-  { id: "summary", label: "Özet", icon: "◔" },
-  { id: "scan", label: "Tara", icon: "⌗" },
-  { id: "pantry", label: "Kiler", icon: "▣" },
-  { id: "sharing", label: "Sosyal", icon: "♧" },
-  { id: "profile", label: "Profil", icon: "◎" },
+const features = [
+  { number: "01", title: "Etiketi tara", text: "Barkodu veya içerik listesini saniyeler içinde okut." },
+  { number: "02", title: "Skoru gör", text: "İçeriği sade bir sağlık skoru ve anlaşılır açıklamalarla keşfet." },
+  { number: "03", title: "Daha iyisini seç", text: "Bütçene ve hassasiyetlerine uygun temiz alternatifleri bul." },
 ];
 
-function ScoreRing({ score = 88 }: { score?: number }) {
+function PhonePreview() {
+  const [tab, setTab] = useState("Özet");
   return (
-    <div className="score-ring" style={{ "--score": `${score * 3.6}deg` } as React.CSSProperties}>
-      <div className="score-ring__inner">
-        <strong>{score}</strong>
-        <span>/100</span>
+    <div className="landing-phone" aria-label="LabelScan uygulama önizlemesi">
+      <div className="phone-top"><span>9:41</span><span>● ● ▰</span></div>
+      <div className="phone-body">
+        <div className="phone-heading"><div><small>CUMARTESİ, 25 EKİM</small><h3>{tab}</h3></div><span className="phone-avatar">AO</span></div>
+        <div className="phone-score"><div><small>GÜNLÜK TEMİZLİK SKORU</small><strong>Harika gidiyorsun.</strong><p>Dününden 4 puan daha iyi.</p></div><div className="ring"><b>88</b><small>/100</small></div></div>
+        <div className="phone-section"><h4>Bugün</h4><a>Detaylar</a></div>
+        <div className="phone-grid"><div className="phone-tile tile-green"><span>✦</span><small>TOKSİN KALKANI</small><b>140g</b><p>Bu ay mısır şurubu engellendi.</p></div><div className="phone-tile tile-purple"><span>↗</span><small>AKILLI TASARRUF</small><b>420 TL</b><p>Smart Swap ile tasarruf.</p></div></div>
+        <div className="phone-section"><h4>Son taramalar</h4><a>Tümünü gör</a></div>
+        <div className="phone-list"><div><i className="dot pink">Y</i><span><b>Organik Yoğurt</b><small>Bugün, 09:42</small></span><em>96</em></div><div><i className="dot orange">E</i><span><b>Ekşi Mayalı Ekmek</b><small>Dün, 18:20</small></span><em>82</em></div></div>
       </div>
+      <div className="phone-nav">{["Özet", "Tara", "Kiler", "Sosyal", "Profil"].map((item) => <button key={item} className={tab === item ? "selected" : ""} onClick={() => setTab(item)}><span>{item === "Özet" ? "◔" : item === "Tara" ? "⌗" : item === "Kiler" ? "▣" : item === "Sosyal" ? "♧" : "◎"}</span>{item}</button>)}</div>
     </div>
   );
 }
-
-function Summary() {
-  return (
-    <div className="screen-content">
-      <header className="page-header">
-        <div>
-          <p className="eyebrow">CUMARTESİ, 25 EKİM</p>
-          <h1>Özet</h1>
-        </div>
-        <button className="avatar" aria-label="Profil">AO</button>
-      </header>
-
-      <section className="hero-card">
-        <div>
-          <p className="eyebrow light">GÜNLÜK TEMİZLİK SKORU</p>
-          <h2>Harika gidiyorsun.</h2>
-          <p className="hero-note">Dününden 4 puan daha iyi.</p>
-        </div>
-        <ScoreRing />
-      </section>
-
-      <div className="section-heading"><h2>Bugün</h2><button className="link-button">Detaylar</button></div>
-      <div className="insight-grid">
-        <article className="insight-card green-card"><span className="card-icon">✦</span><p className="eyebrow">TOKSİN KALKANI</p><strong>140g</strong><p>Bu ay mısır şurubu engellendi.</p></article>
-        <article className="insight-card purple-card"><span className="card-icon">↗</span><p className="eyebrow">AKILLI TASARRUF</p><strong>420 TL</strong><p>Smart Swap ile tasarruf.</p></article>
-      </div>
-
-      <div className="section-heading"><h2>Son taramalar</h2><button className="link-button">Tümünü gör</button></div>
-      <div className="scan-list">
-        <div className="list-row"><span className="product-dot yogurt">Y</span><div><strong>Organik Yoğurt</strong><small>Bugün, 09:42</small></div><span className="mini-score good">96</span></div>
-        <div className="list-row"><span className="product-dot bread">E</span><div><strong>Ekşi Mayalı Ekmek</strong><small>Dün, 18:20</small></div><span className="mini-score okay">82</span></div>
-      </div>
-    </div>
-  );
-}
-
-function Scan() {
-  return <div className="screen-content"><header className="page-header"><div><p className="eyebrow">LABELSCAN</p><h1>Hızlı Tarayıcı</h1></div><button className="help-button">?</button></header><section className="scanner"><div className="scanner-corners" /><div className="barcode">▥ ▥ ▥ ▥ ▥ ▥</div><p>Barkodu veya içerik listesini çerçeveye hizala</p></section><button className="primary-action">＋ Fotoğraf çek</button><div className="tip-card"><span>✦</span><div><strong>Smart Swap hazır</strong><p>Daha temiz ve uygun fiyatlı alternatifleri keşfet.</p></div></div></div>;
-}
-
-function Pantry() { return <div className="screen-content"><header className="page-header"><div><p className="eyebrow">ENVANTERİN</p><h1>Akıllı Kiler</h1></div><button className="add-button">＋</button></header><section className="waste-card"><div><p className="eyebrow light">BU AY TASARRUF</p><strong>₺186,40</strong><p>İsrafı önleyerek cebinde kaldı.</p></div><span className="trend">↗ 18%</span></section><div className="section-heading"><h2>Yaklaşan son kullanma</h2></div><div className="scan-list"><div className="list-row"><span className="product-dot milk">S</span><div><strong>Süt</strong><small>Son kullanma tarihine 2 gün kaldı</small></div><span className="warning-pill">2 gün</span></div><div className="list-row"><span className="product-dot yogurt">Y</span><div><strong>Yoğurt</strong><small>Son kullanma tarihine 5 gün kaldı</small></div><span className="mini-score good">5 gün</span></div></div><div className="section-heading"><h2>Tüketim istatistikleri</h2></div><div className="stat-card"><div><strong>12</strong><small>Ekmek</small></div><div><strong>6</strong><small>Yoğurt</small></div><div><strong>4</strong><small>Süt</small></div></div></div>; }
-
-function Social() { return <div className="screen-content"><header className="page-header"><div><p className="eyebrow">TOPLULUK</p><h1>Sosyal Akış</h1></div><button className="avatar teal">♧</button></header><div className="section-heading"><h2>Arkadaşların ne keşfediyor?</h2></div><article className="feed-card"><div className="feed-head"><span className="avatar small">AK</span><div><strong>Ahmet K.</strong><small>2 saat önce</small></div></div><p>Yeni favorim: Organik Keçi Yoğurdu.</p><div className="feed-product"><span className="product-dot yogurt">Y</span><div><strong>Organik Keçi Yoğurdu</strong><small>Temizlik skoru: 96</small></div><button className="add-cart">Ekle</button></div></article><section className="league-card"><div><p className="eyebrow">SIFIR ATIK LİGİ</p><h2>Bu hafta 3. sıradasın</h2><p>İsrafı azaltmaya devam et.</p></div><strong className="rank">#3</strong></section></div>; }
-
-function Profile() { return <div className="screen-content"><header className="page-header"><div><p className="eyebrow">HESABIN</p><h1>Sağlık Karnesi</h1></div><button className="settings">⚙</button></header><div className="profile-intro"><span className="large-avatar">AO</span><div><h2>Ayşe Özdemir</h2><p>Sağlık tercihlerin kişiselleştiriliyor.</p></div></div><div className="section-heading"><h2>Alerjiler ve hassasiyetler</h2><button className="link-button">Düzenle</button></div><div className="preference-list"><div><span className="status active" />Laktoz İntoleransı <small>Aktif</small></div><div><span className="status" />Gluten Hassasiyeti <small>Pasif</small></div></div><section className="pro-card"><p className="eyebrow light">LABELSCAN PRO</p><h2>Daha bilinçli seçimler.</h2><p>Sınırsız tarama, kişisel raporlar ve daha fazlası.</p><button>Pro&apos;yu keşfet <span>→</span></button></section></div>; }
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState("summary");
-  const screens: Record<string, React.ReactNode> = { summary: <Summary />, scan: <Scan />, pantry: <Pantry />, sharing: <Social />, profile: <Profile /> };
-  return <main className="app-shell"><div className="phone-frame"><div className="status-bar"><span>9:41</span><span>● ● ▰</span></div>{screens[activeTab]}<nav className="tab-bar" aria-label="Ana navigasyon">{tabs.map((tab) => <button key={tab.id} className={activeTab === tab.id ? "tab active" : "tab"} onClick={() => setActiveTab(tab.id)}><span className="tab-icon">{tab.icon}</span><span>{tab.label}</span></button>)}</nav></div></main>;
+  return <main className="landing-page">
+    <nav className="landing-nav"><a className="brand" href="#top"><span className="brand-mark">⌁</span> labelscan</a><div className="nav-links"><a href="#nasil-calisir">Nasıl çalışır?</a><a href="#ozellikler">Özellikler</a><a href="#hikaye">Bizim hikâyemiz</a></div><a className="nav-cta" href="#basla">Uygulamayı keşfet <span>↗</span></a></nav>
+    <section className="landing-hero" id="top"><div className="hero-copy"><p className="kicker"><span /> BİLİNÇLİ SEÇİMLER İÇİN</p><h1>Etiketi oku.<br /><em>Daha iyi</em> yaşa.</h1><p className="hero-text">Market alışverişini daha bilinçli hale getir. LabelScan ile ürünlerin içeriğini saniyeler içinde anla, sana en uygun seçeneği bul.</p><div className="hero-actions"><a className="primary-cta" href="#basla">Ücretsiz başla <span>↗</span></a><a className="text-cta" href="#nasil-calisir"><span className="play">▶</span> Nasıl çalıştığını gör</a></div><div className="hero-proof"><div className="proof-avatars"><span>AY</span><span>MK</span><span>EO</span></div><p><b>12.000+</b><br />bilinçli alışverişçi</p></div></div><div className="hero-visual"><div className="visual-note note-top"><span>✦</span><b>Temizlik skoru</b><strong>88<span>/100</span></strong></div><PhonePreview /><div className="visual-note note-bottom"><span className="note-check">✓</span><div><b>Smart Swap</b><small>Daha iyi alternatif bulundu</small></div></div></div></section>
+    <section className="trust-strip"><p>DAHA İYİ SEÇİMLER YAPANLARIN TERCİHİ</p><div><span>Günlük alışkanlıklarını sadeleştir.</span><span>İçeriğini gerçekten anla.</span><span>İsrafı birlikte azalt.</span></div></section>
+    <section className="intro-section" id="hikaye"><div><p className="kicker"><span /> NEDEN LABELSCAN?</p><h2>Ne aldığını bilmek<br /><em>hakkın.</em></h2></div><div><p className="intro-text">Karmaşık içerik listelerini herkesin anlayabileceği bir dile çeviriyoruz. Çünkü daha sağlıklı yaşamak, uzman olmayı değil, doğru bilgiye zamanında ulaşmayı gerektirir.</p><a className="arrow-link" href="#nasil-calisir">LabelScan’i keşfet <span>↗</span></a></div></section>
+    <section className="steps-section" id="nasil-calisir"><div className="section-label"><p className="kicker"><span /> NASIL ÇALIŞIR?</p><h2>Üç adımda<br /><em>daha bilinçli.</em></h2></div><div className="steps">{features.map((feature) => <article key={feature.number} className="step"><span>{feature.number}</span><h3>{feature.title}</h3><p>{feature.text}</p><div className="step-arrow">↗</div></article>)}</div></section>
+    <section className="final-cta" id="basla"><div><p className="kicker"><span /> BUGÜN BAŞLA</p><h2>Bir sonraki alışverişin<br /><em>daha bilinçli olsun.</em></h2></div><a className="primary-cta light" href="#top">Uygulamayı aç <span>↗</span></a></section>
+    <footer><a className="brand" href="#top"><span className="brand-mark">⌁</span> labelscan</a><p>Gıdanın dilini birlikte sadeleştiriyoruz.</p><span>© 2025 LabelScan</span></footer>
+  </main>;
 }
